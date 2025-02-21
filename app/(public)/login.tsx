@@ -1,39 +1,30 @@
 import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TextInput } from '@/components/inputs';
 import { loginSchema, LoginSchema } from '@/components/features/auth';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import Toast from 'react-native-toast-message';
+import { useAuth } from '@/context/AuthProvider';
 
 export default function LoginScreen() {
-  const { control, handleSubmit, formState: { errors } } = useForm<LoginSchema>({
+  const { login } = useAuth();
+
+  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema)
   });
 
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleLogin = async () => {
-    if (!identifier || !password) {
-      setError('Vui lòng nhập đầy đủ thông tin');
-      return;
-    }
-
-    setError('');
-    setIsLoading(true);
-
-    // Simulate login - Replace with your actual login logic
+  const onSubmit = async (data: LoginSchema) => {
     try {
-      // Add your authentication logic here
-      console.log('Logging in with:', { identifier, password });
+      login(data.username, data.password);
     } catch (err) {
-      setError('Đăng nhập thất bại. Vui lòng thử lại.');
-    } finally {
-      setIsLoading(false);
+      Toast.show({
+        type: 'error',
+        text1: 'Đăng nhập thất bại',
+        text2: 'Vui lòng thử lại.'
+      });
     }
   };
 
@@ -81,13 +72,19 @@ export default function LoginScreen() {
                 }}>
                   Email hoặc số điện thoại
                 </Text>
-                <TextInput
-                  value={identifier}
-                  onChangeText={setIdentifier}
-                  placeholder="Nhập email hoặc số điện thoại"
-                  placeholderTextColor="#rgba(255,255,255,0.6)"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
+                <Controller
+                  control={control}
+                  name="username"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      value={value}
+                      placeholder="Nhập email hoặc số điện thoại"
+                      placeholderTextColor="#rgba(255,255,255,0.6)"
+                      error={errors.username?.message}
+                    />
+                  )}
                 />
               </View>
 
@@ -99,36 +96,35 @@ export default function LoginScreen() {
                 }}>
                   Mật khẩu
                 </Text>
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Nhập mật khẩu"
-                  placeholderTextColor="#rgba(255,255,255,0.6)"
-                  secureTextEntry
+
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      value={value}
+                      placeholder="Nhập mật khẩu"
+                      placeholderTextColor="#rgba(255,255,255,0.6)"
+                      secureTextEntry
+                      error={errors.password?.message}
+                    />
+                  )}
                 />
               </View>
-
-              {error ? (
-                <Text style={{
-                  color: '#FFE5E5',
-                  fontSize: 14,
-                  textAlign: 'center'
-                }}>
-                  {error}
-                </Text>
-              ) : null}
             </View>
 
             {/* Login Button */}
             <TouchableOpacity
-              onPress={handleLogin}
-              disabled={isLoading}
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
               style={{
                 backgroundColor: 'white',
                 paddingVertical: 16,
                 borderRadius: 25,
                 marginTop: 'auto',
-                opacity: isLoading ? 0.7 : 1
+                opacity: isSubmitting ? 0.7 : 1
               }}
             >
               <Text style={{
@@ -137,7 +133,7 @@ export default function LoginScreen() {
                 fontWeight: '600',
                 color: '#000'
               }}>
-                {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </Text>
             </TouchableOpacity>
           </View>

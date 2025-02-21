@@ -17,6 +17,7 @@ export type TextProps = ThemeProps & DefaultText['props'];
 export type ViewProps = ThemeProps & DefaultView['props'];
 export type TextInputProps = ThemeProps & DefaultTextInput['props'] & {
   style?: StyleProp<ViewStyle>;
+  error?: string;
 };
 
 export function useThemeColor(

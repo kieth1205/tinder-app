@@ -1,72 +1,137 @@
 
-import React, { useState } from "react";
-import { Text, View, TextInput } from "@/components/Themed";
-import { Alert, SafeAreaView, TouchableOpacity } from "react-native";
-import { useAuth } from "@/context/AuthProvider";
+import React from "react";
+import { Text, View } from "@/components/Themed";
+import { KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
+import { InputTags } from "@/components/inputs";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { ScrollView } from 'react-native-virtualized-view'
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { RegisterSchema, registerSchema } from "@/components/features/auth/schema";
 
-export default function login() {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+export default function Register() {
+  const { control, handleSubmit, formState: { errors } } = useForm<RegisterSchema>({
+    resolver: zodResolver(registerSchema),
+  });
 
-    const { login } = useAuth();
+  const onSubmit = (data: RegisterSchema) => {
+    console.log(data)
+  }
 
-    const _login = (username: string, password: string) => {
-        if (username === "" || password === "")
-            Alert.alert("Error", "Please enter a username and password");
-        else login(username, password);
-    };
-
-    return (
-        <SafeAreaView className="flex-1 flex flex-col">
-            <View className="flex-1 flex flex-col justify-center px-4">
-                <Text className="text-3xl mb-2">Log in</Text>
-                <Text className="mb-2 opacity-70">
-                    Any username and password is a valid login.
-                </Text>
-                <View>
-                    <Text className="font-semibold text-lg mb-1">Username</Text>
-                    <TextInput
-                        placeholder="username"
-                        className="border border-gray-500 rounded-xl p-3"
-                        value={username}
-                        onChangeText={setUsername}
-                    />
-                </View>
-                <View>
-                    <Text className="font-semibold text-lg mb-1">Password</Text>
-                    <TextInput
-                        placeholder="password"
-                        className="border border-gray-500 rounded-xl p-3"
-                        value={password}
-                        onChangeText={setPassword}
-                    />
-                </View>
-                <Button
-                    style={{ marginTop: 20 }}
-                    title="Log in"
-                    onPress={() => _login(username, password)}
-                />
-            </View>
-        </SafeAreaView>
-    );
-}
-
-const Button = ({
-    title,
-    onPress,
-    style,
-}: {
-    title: string;
-    onPress: () => void;
-    style?: any;
-}) => {
-    return (
-        <TouchableOpacity
-            onPress={onPress}
-            style={[style]}
-            className={`bg-blue-500 rounded-xl px-2 py-3`}
+  return (
+    <LinearGradient
+      colors={['#3B3B3B', '#4B4B4B']}
+      style={{ flex: 1 }}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
         >
-            <Text className="text-white text-center">{title}</Text>
+          <View style={{ flex: 1, padding: 24, backgroundColor: "transparent" }}>
+            {/* Header with back button */}
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{
+                marginTop: Platform.OS === 'ios' ? 40 : 20,
+                marginBottom: 20,
+              }}
+            >
+              <Ionicons name="arrow-back" size={28} color="white" />
+            </TouchableOpacity>
+
+            <Text style={{
+              color: 'white',
+              fontSize: 26,
+              fontWeight: 'bold',
+              marginBottom: 30
+            }}>
+              Đăng ký
+            </Text>
+
+            {/* Input Fields */}
+            <View style={{ gap: 16, backgroundColor: "transparent" }}>
+              <View style={{ backgroundColor: "transparent" }}>
+                <Text style={{
+                  color: 'white',
+                  marginBottom: 8,
+                  fontSize: 16
+                }}>
+                  Email hoặc số điện thoại
+                </Text>
+                <Controller
+                  control={control}
+                  name="tag"
+                  render={({ field: { onChange, value } }) => (
+                    <InputTags
+                      value={value}
+                      onSelectedItemsChange={onChange}
+                      selectType="single"
+                      items={[{
+                        label: 'test',
+                        value: 'test'
+                      },
+                      {
+                        label: 'test2',
+                        value: 'test2'
+                      },
+                      {
+                        label: 'test3',
+                        value: 'test3'
+                      },
+                      {
+                        label: 'test4',
+                        value: 'test4'
+                      },
+                      {
+                        label: 'test5',
+                        value: 'test5'
+                      },
+                      {
+                        label: 'test6',
+                        value: 'test6'
+                      }]} />
+                  )}
+                />
+                <InputTags
+                  value={['test']}
+                  items={[{
+                    label: 'test',
+                    value: 'test'
+                  },
+                  {
+                    label: 'test2',
+                    value: 'test2'
+                  },
+                  {
+                    label: 'test3',
+                    value: 'test3'
+                  },
+                  {
+                    label: 'test4',
+                    value: 'test4'
+                  },
+                  {
+                    label: 'test5',
+                    value: 'test5'
+                  },
+                  {
+                    label: 'test6',
+                    value: 'test6'
+                  }]} />
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+        <TouchableOpacity style={{ backgroundColor: "red", padding: 12, alignItems: "center", justifyContent: "center", margin: 24 }} onPress={handleSubmit(onSubmit)}>
+          <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>Submit</Text>
         </TouchableOpacity>
-    );
-};
+      </KeyboardAvoidingView>
+    </LinearGradient>
+  );
+}

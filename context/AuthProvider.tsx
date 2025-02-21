@@ -3,66 +3,66 @@ import { useContext, useState } from "react";
 import { router, useSegments } from "expo-router";
 
 type User = {
-    id: string;
-    username: string;
+  id: string;
+  username: string;
 };
 
 type AuthProvider = {
-    user: User | null;
-    login: (username: string, password: string) => boolean;
-    logout: () => void;
+  user: User | null;
+  login: (username: string, password: string) => boolean;
+  logout: () => void;
 };
 
 function useProtectedRoute(user: User | null) {
-    const segments = useSegments();
+  const segments = useSegments();
 
-    useEffect(() => {
-        const inAuthGroup = segments[0] === "(tabs)";
+  useEffect(() => {
+    const inAuthGroup = segments[0] === "(tabs)";
 
-        if (!user && inAuthGroup) {
-            router.replace("/auth");
-        } else if (user && !inAuthGroup) {
-            router.replace("/(tabs)");
-        }
-    }, [user, segments]);
+    if (!user && inAuthGroup) {
+      router.replace("/auth");
+    } else if (user && !inAuthGroup) {
+      router.replace("/(tabs)");
+    }
+  }, [user, segments]);
 }
 
 export const AuthContext = createContext<AuthProvider>({
-    user: null,
-    login: () => false,
-    logout: () => { },
+  user: null,
+  login: () => false,
+  logout: () => { },
 });
 
 export function useAuth() {
-    if (!useContext(AuthContext)) {
-        throw new Error("useAuth must be used within a <AuthProvider />");
-    }
+  if (!useContext(AuthContext)) {
+    throw new Error("useAuth must be used within a <AuthProvider />");
+  }
 
-    return useContext(AuthContext);
+  return useContext(AuthContext);
 }
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
-    const login = (username: string, password: string) => {
-        console.log("login", username, password);
-        setUser({
-            id: "1",
-            username: username,
-        });
+  const login = (username: string, password: string) => {
+    console.log("login", username, password);
+    setUser({
+      id: "1",
+      username: username,
+    });
+    router.push('/(tabs)');
+    return true;
+  };
 
-        return true;
-    };
+  const logout = () => {
+    setUser(null);
+  };
 
-    const logout = () => {
-        setUser(null);
-    };
+  useProtectedRoute(user);
 
-    useProtectedRoute(user);
-
-    return (
-        <AuthContext.Provider value={{ user, login, logout }}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
