@@ -11,6 +11,8 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterSchema, registerSchema } from "@/components/features/auth/schema";
 import { SliderComponent } from "@/components/inputs/Slider";
+import { MediaUploader } from "@/components/inputs/MediaUploader";
+import { LocationTracker } from "@/components/LocationTracker";
 
 export default function Register() {
   const { control, handleSubmit, formState: { errors } } = useForm<RegisterSchema>({
@@ -129,6 +131,8 @@ export default function Register() {
             </View>
           </View>
           <SliderComponent value={10} onChange={() => { console.log('test') }} />
+          <MediaUploader />
+          <LocationTracker />
         </ScrollView>
         <TouchableOpacity style={{ backgroundColor: "red", padding: 12, alignItems: "center", justifyContent: "center", margin: 24 }} onPress={handleSubmit(onSubmit)}>
           <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>Submit</Text>
