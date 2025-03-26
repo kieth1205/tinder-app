@@ -5,6 +5,15 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@/components/*": [
+        "./components/*"
+      ],
+      "@/context/*": [
+        "./context/*"
+      ],
+      "@/hooks/*": [
+        "./hooks/*"
       ]
     }
   },

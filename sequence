@@ -1,0 +1,20 @@
+sequenceDiagram
+    participant User
+    participant App
+    participant LLM
+    participant DB
+    participant Matching
+
+    User->>App: Submit raw profile
+    App->>LLM: Extract structured data + generate embeddings
+    LLM->>DB: Save structured data & embeddings
+    User->>App: Perform swipe actions
+    App->>DB: Record swipe + update preferences
+    loop Daily batch
+        DB->>Matching: Feed preferences
+        Matching->>Matching: Run Gale-Shapley
+        Matching->>DB: Update stable matches
+    end
+    DB->>LangChain: Retrieve context
+    LangChain->>RAG: Generate suggestions
+    RAG->>User: Show recommendations
