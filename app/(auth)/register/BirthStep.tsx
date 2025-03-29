@@ -24,8 +24,6 @@ const BirthStep = () => {
     return age >= 18;
   };
 
-  console.log(date, isValidAge());
-
   return (
     <SafeAreaView style={styles.container}>
       <ProgressBar step={2} totalSteps={5} />
@@ -39,22 +37,25 @@ const BirthStep = () => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.content}>
-            <Text style={styles.title}>{`My\nbirthday is`}</Text>
-
+            <Text style={styles.title}>{`Ngày sinh của bạn là`}</Text>
             <BirthdayInput
               value={date}
               onChange={setDate}
               invalid={!isValidAge()}
-              errorText="You must be at least 18 years old to use Tinder"
-            />
-            <Button
-              style={[styles.button, !date && styles.buttonDisabled]}
-              onPress={() => router.push("/register/GenderStep")}
-              disabled={!date}
-              title="CONTINUE"
+              errorText={
+                isValidAge()
+                  ? "Bạn phải trên 18 tuổi để sử dụng Tinder"
+                  : "Tuổi của bạn sẽ được công khai trên tài khoản của bạn"
+              }
             />
           </View>
         </ScrollView>
+        <Button
+          style={[styles.button, !date && styles.buttonDisabled]}
+          onPress={() => router.push("/register/GenderStep")}
+          disabled={!date}
+          title="Tiếp tục"
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -70,12 +71,12 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 40,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "600",
-    marginBottom: 32,
+    fontSize: 34,
+    fontWeight: "bold",
+    marginBottom: 30,
+    color: "#000",
   },
   button: {
     backgroundColor: "#FE3C72",

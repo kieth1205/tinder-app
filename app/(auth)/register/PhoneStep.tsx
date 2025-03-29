@@ -8,14 +8,14 @@ import {
 import React, { useState } from "react";
 import { Button } from "@/components/button/ContinueButton";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { TextInput } from "@/components/inputs";
 
 const PhoneStep = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
 
   const handleNext = () => {
-    router.push("/register/OTPStep");
+    router.push("/register/NameStep");
     console.log("Phone number:", phoneNumber);
   };
 
@@ -30,24 +30,26 @@ const PhoneStep = () => {
       >
         <Ionicons name="arrow-back" size={28} color="gray" />
       </TouchableOpacity>
-      <Text style={styles.title}>My number is</Text>
+      <Text style={styles.title}>Số điện thoại của bạn là</Text>
       <TextInput
         style={styles.input}
-        placeholder="Phone Number"
+        placeholder="Số điện thoại"
         keyboardType="phone-pad"
         outlineMode="bottom"
         value={phoneNumber}
         onChangeText={setPhoneNumber}
       />
       <Text style={styles.description}>
-        We will send a text with a verification code. Message and data rates may
-        apply. &nbsp;
-        <Text style={{ textDecorationLine: "underline" }}>
-          Learn what happens when your number changes.
-        </Text>
+        Chúng tôi sẽ gửi tin nhắn có mã xác minh. Có thể áp dụng cước tin nhắn
+        và dữ liệu. &nbsp;
+        <Link href="/modal" asChild>
+          <Text style={{ textDecorationLine: "underline" }}>
+            Tìm hiểu điều gì sẽ xảy ra khi số của bạn thay đổi
+          </Text>
+        </Link>
       </Text>
 
-      <Button title="CONTINUE" gradient onPress={handleNext} />
+      <Button title="Tiếp tục" gradient onPress={handleNext} />
     </View>
   );
 };

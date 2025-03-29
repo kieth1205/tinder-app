@@ -11,6 +11,8 @@ import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>["name"];
   color: string;
+  activeIcon: React.ReactNode;
+  inactiveIcon: React.ReactNode;
 }) {
   return <FontAwesome size={28} {...props} />;
 }
@@ -22,8 +24,6 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
         headerShown: useClientOnlyValue(false, true),
       }}
     >

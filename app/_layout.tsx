@@ -14,7 +14,7 @@ import { StatusBar } from "expo-status-bar"; // Import StatusBar
 import { useColorScheme } from "@/components/useColorScheme";
 import AuthProvider from "@/context/AuthProvider";
 import Toast from "react-native-toast-message";
-import React from "react";
+import { StatusBar } from "expo-status-bar";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -58,6 +58,10 @@ function RootLayoutNav() {
 
   return (
     <AuthProvider>
+      <StatusBar
+        style={colorScheme === "dark" ? "light" : "dark"}
+        translucent
+      />
       <Toast />
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <Stack
@@ -68,6 +72,7 @@ function RootLayoutNav() {
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         </Stack>
       </ThemeProvider>
     </AuthProvider>

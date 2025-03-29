@@ -30,7 +30,7 @@ const GenderStep = () => {
       <ProgressBar step={3} totalSteps={6} />
       <AuthHeader onBack={() => router.back()} />
       <View style={styles.content}>
-        <Text style={styles.title}>I am a</Text>
+        <Text style={styles.title}>Bạn là</Text>
 
         <View style={styles.optionsContainer}>
           {genderOptions.map((option) => (
@@ -88,7 +88,8 @@ const styles = StyleSheet.create({
   genderOption: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
+    paddingVertical: 14,
+    justifyContent: "center",
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "#FF4458",

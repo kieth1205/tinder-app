@@ -26,14 +26,14 @@ const OTPStep = () => {
         <Ionicons name="arrow-back" size={28} color="gray" />
       </TouchableOpacity>
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>My code is</Text>
+        <Text style={styles.title}>Mã của bạn là</Text>
         <Text style={styles.description}>
-          Please enter the code sent to your phone number
+          Vui lòng nhập mã đã được gửi đến số điện thoại của bạn
         </Text>
         <OTPInput length={6} />
       </View>
       <View style={styles.buttonContainer}>
-        <Button title="CONTINUE" gradient onPress={handleNext} />
+        <Button title="Tiếp tục" gradient onPress={handleNext} />
       </View>
     </View>
   );

@@ -30,27 +30,26 @@ const NameStep = () => {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.title}>My first name is</Text>
+          <Text style={styles.title} children="Tên của bạn là" />
           <TextInput
             style={styles.input}
             value={name}
             outlineMode="bottom"
             onChangeText={setName}
-            placeholder="Enter your first name"
+            placeholder="Nhập tên của bạn"
             // autoFocus
           />
           <Text style={styles.hint}>
-            This is how it will appear in Tinder and you won't be able to change
-            it
+            Đây là cách nó sẽ xuất hiện trong Tinder và bạn sẽ không thể thay
+            đổi nó
           </Text>
-
-          <Button
-            style={[styles.button, !name && styles.buttonDisabled]}
-            onPress={() => router.push("/register/BirthStep")}
-            disabled={!name}
-            title="CONTINUE"
-          />
         </ScrollView>
+        <Button
+          style={[styles.button, !name && styles.buttonDisabled]}
+          onPress={() => router.push("/register/BirthStep")}
+          disabled={!name}
+          title="Tiếp tục"
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -69,9 +68,10 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "600",
-    marginBottom: 32,
+    fontSize: 34,
+    fontWeight: "bold",
+    marginBottom: 30,
+    color: "#000",
   },
   input: {
     borderBottomWidth: 2,

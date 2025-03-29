@@ -26,7 +26,7 @@ export const Button = ({
   title,
   onPress,
   variant = "primary",
-  size = "medium",
+  size = "small",
   disabled,
   loading,
   style,
@@ -60,23 +60,18 @@ export const Button = ({
 
   return (
     <TouchableOpacity
-      style={!gradient && buttonStyles}
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.8}
+      style={buttonStyles}
     >
-      {gradient ? (
-        <LinearGradient
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          colors={["#EA4080", "#EE805F"]} // Thay đổi màu sắc gradient theo ý muốn
-          style={styles.gradientButton}
-        >
-          {content}
-        </LinearGradient>
-      ) : (
-        content
-      )}
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        colors={gradient ? ["#EA4080", "#EE805F"] : ["#E8E6EA", "#E8E6EA"]}
+      >
+        {content}
+      </LinearGradient>
     </TouchableOpacity>
   );
 };
@@ -86,11 +81,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 50,
-  },
-  gradientButton: {
-    borderRadius: 50,
-    paddingVertical: 12, // Thay đổi padding nếu cần
-    paddingHorizontal: 24,
   },
   button_primary: {
     backgroundColor: "#FE3C72",
@@ -108,15 +98,12 @@ const styles = StyleSheet.create({
   },
   button_small: {
     paddingVertical: 8,
-    paddingHorizontal: 16,
   },
   button_medium: {
     paddingVertical: 12,
-    paddingHorizontal: 24,
   },
   button_large: {
     paddingVertical: 16,
-    paddingHorizontal: 32,
   },
   text: {
     fontSize: 16,
