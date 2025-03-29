@@ -63,6 +63,8 @@ export const TextInput = ({
           color: "white",
           fontSize: 16,
           overflow: "hidden",
+          minHeight: 40,
+          paddingHorizontal: 10,
           borderWidth: outlineMode === "both" ? 1 : 0,
           borderBottomWidth: ["bottom", "both"].includes(outlineMode) ? 1 : 0,
           borderTopWidth: ["top", "both"].includes(outlineMode) ? 1 : 0,

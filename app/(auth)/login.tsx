@@ -59,7 +59,6 @@ export default function LoginScreen() {
             >
               <Ionicons name="arrow-back" size={28} color="white" />
             </TouchableOpacity>
-
             <Text
               style={{
                 color: "white",

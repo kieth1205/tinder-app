@@ -1,28 +1,43 @@
-import { StyleSheet } from "react-native";
+import {
+  Dimensions,
+  FlatList,
+  ImageBackground,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+
+export const DARK_GRAY = "#363636";
 
 import { Text, View } from "@/components/Themed";
 
 export default function TabTwoScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab Chat</Text>
+    <View style={styles.containerMessages}>
+      <View style={styles.top}>
+        <Text style={styles.title}>Messages</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  bg: {
     flex: 1,
+    resizeMode: "cover",
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
+  },
+  containerMessages: {
+    justifyContent: "space-between",
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+  top: {
+    paddingTop: 50,
+    marginHorizontal: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: "80%",
-  },
+  title: { paddingBottom: 10, fontSize: 22, color: DARK_GRAY },
 });

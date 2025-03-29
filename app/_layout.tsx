@@ -13,6 +13,7 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/components/useColorScheme";
 import AuthProvider from "@/context/AuthProvider";
 import Toast from "react-native-toast-message";
+import { StatusBar } from "expo-status-bar";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -56,6 +57,10 @@ function RootLayoutNav() {
 
   return (
     <AuthProvider>
+      <StatusBar
+        style={colorScheme === "dark" ? "light" : "dark"}
+        translucent
+      />
       <Toast />
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <Stack>
