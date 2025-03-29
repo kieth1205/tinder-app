@@ -15,7 +15,7 @@ const PhoneStep = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
 
   const handleNext = () => {
-    router.push("/register/OTPStep");
+    router.push("/register/NameStep");
     console.log("Phone number:", phoneNumber);
   };
 
