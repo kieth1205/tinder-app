@@ -48,7 +48,6 @@ export default function Welcome() {
               onPress={() => router.push("/login")}
             />
           </View>
-
           <Link href="/modal" asChild>
             <Text style={styles.troubleText}>Gặp sự cố khi đăng nhập?</Text>
           </Link>

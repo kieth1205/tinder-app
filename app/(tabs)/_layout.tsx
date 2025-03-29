@@ -46,6 +46,7 @@ export default function TabLayout() {
               </Pressable>
             </Link>
           ),
+          headerShown: false,
         }}
       />
       <Tabs.Screen
@@ -55,6 +56,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="comment" color={color} />
           ),
+          headerShown: false,
         }}
       />
       <Tabs.Screen
@@ -62,6 +64,7 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+          headerShown: false,
         }}
       />
     </Tabs>
