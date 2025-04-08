@@ -49,7 +49,9 @@ const PhotosStep = () => {
           </TouchableOpacity>
         ))}
       </ScrollView>
-      <Button title="CONTINUE" gradient onPress={handleNext} />
+      <View style={styles.buttonContainer}>
+        <Button title="Tiếp tục" gradient onPress={handleNext} />
+      </View>
     </SafeAreaView>
   );
 };
@@ -99,5 +101,9 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: "#ddd",
     borderRadius: 8,
+  },
+  buttonContainer: {
+    flex: 1,
+    paddingHorizontal: 28,
   },
 });

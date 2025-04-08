@@ -12,9 +12,11 @@ import { router } from "expo-router";
 import { Button } from "@/components/button/ContinueButton";
 import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
+import { useRegistration } from "@/context/RegistrationContext";
 
 const GenderStep = () => {
-  const [selectedGender, setSelectedGender] = useState<string | null>("male");
+  const { registrationData, updateRegistrationData } = useRegistration();
+  const [selectedGender, setSelectedGender] = useState<string | null>(registrationData.gender || "male");
 
   const genderOptions = [
     { id: "male", label: "Nam", icon: "male" },
@@ -22,6 +24,7 @@ const GenderStep = () => {
   ];
 
   const handleNext = () => {
+    updateRegistrationData('gender', selectedGender);
     router.push("/register/InterestStep");
   };
 
@@ -58,12 +61,12 @@ const GenderStep = () => {
             </TouchableOpacity>
           ))}
         </View>
+        <Button
+          style={[styles.button, !selectedGender && styles.buttonDisabled]}
+          title="Tiếp tục"
+          onPress={handleNext}
+        />
       </View>
-      <Button
-        style={[styles.button, !selectedGender && styles.buttonDisabled]}
-        title="CONTINUE"
-        onPress={handleNext}
-      />
     </SafeAreaView>
   );
 };

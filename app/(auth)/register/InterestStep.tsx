@@ -7,11 +7,13 @@ import {
   SafeAreaView,
   Pressable,
 } from "react-native";
-import React, { useState } from "react";
+import React from "react";
+import { useRegistration } from "@/context/RegistrationContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
 import { router } from "expo-router";
+import { Button } from "@/components/button/ContinueButton";
 
 const interests = [
   { id: "1", name: "Âm nhạc", icon: "music" },
@@ -23,12 +25,14 @@ const interests = [
 ];
 
 const InterestStep = () => {
-  const [selected, setSelected] = useState<string[]>([]);
+  const { registrationData, updateRegistrationData } = useRegistration();
 
   const toggleInterest = (id: string) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    const updatedInterests = registrationData.interests.includes(id)
+      ? registrationData.interests.filter((i) => i !== id)
+      : [...registrationData.interests, id];
+
+    updateRegistrationData('interests', updatedInterests);
   };
 
   return (
@@ -45,7 +49,7 @@ const InterestStep = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Interest</Text>
+        <Text style={styles.title}>Sở thích</Text>
         <Text style={styles.subtitle}>
           Chọn ít nhất 3 sở thích để hiển thị trên hồ sơ
         </Text>
@@ -63,20 +67,29 @@ const InterestStep = () => {
           <TouchableOpacity
             style={[
               styles.interestCard,
-              selected.includes(item.id) && styles.selectedCard,
+              registrationData.interests.includes(item.id) && styles.selectedCard,
             ]}
             onPress={() => toggleInterest(item.id)}
           >
             <MaterialCommunityIcons
-              name={item.icon}
+              name={item.icon as any}
               size={28}
-              color={selected.includes(item.id) ? "#FF5864" : "#666"}
+              color={registrationData.interests.includes(item.id) ? "#FF5864" : "#666"}
             />
             <Text style={styles.interestText}>{item.name}</Text>
           </TouchableOpacity>
         )}
         keyExtractor={(item) => item.id}
       />
+
+      <View style={styles.buttonContainer}>
+        <Button
+          style={[styles.button, !registrationData.name && styles.buttonDisabled]}
+          onPress={() => router.push("/register/PhotosStep")}
+          disabled={!registrationData.name}
+          title="Tiếp tục"
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -135,6 +148,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#333",
+  },
+  button: {
+    backgroundColor: "#FE3C72",
+    borderRadius: 25,
+    paddingVertical: 12,
+    marginTop: "auto",
+    marginBottom: 24,
+  },
+  buttonDisabled: {
+    backgroundColor: "#E8E6EA",
+  },
+  buttonContainer: {
+    flex: 1,
+    paddingHorizontal: 40,
   },
 });
 

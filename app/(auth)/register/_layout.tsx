@@ -5,7 +5,7 @@ export default function RegisterLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="PhoneStep" />
-      <Stack.Screen name="OTPStep" />
+      {/* <Stack.Screen name="OTPStep" /> */}
       <Stack.Screen name="NameStep" />
       <Stack.Screen name="BirthStep" />
       <Stack.Screen name="GenderStep" />

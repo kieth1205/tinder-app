@@ -65,13 +65,13 @@ export const Button = ({
       activeOpacity={0.8}
       style={buttonStyles}
     >
-      <LinearGradient
+      {/* <LinearGradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         colors={gradient ? ["#EA4080", "#EE805F"] : ["#E8E6EA", "#E8E6EA"]}
-      >
-        {content}
-      </LinearGradient>
+      > */}
+      {content}
+      {/* </LinearGradient> */}
     </TouchableOpacity>
   );
 };
@@ -81,6 +81,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 50,
+    paddingVertical: 12,
   },
   button_primary: {
     backgroundColor: "#FE3C72",

@@ -3,7 +3,8 @@ import { Button } from "@/components/button/ContinueButton";
 import { TextInput } from "@/components/inputs";
 import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
+import { useRegistration } from "@/context/RegistrationContext";
 import {
   View,
   Text,
@@ -15,7 +16,7 @@ import {
 } from "react-native";
 
 const NameStep = () => {
-  const [name, setName] = useState("");
+  const { registrationData, updateRegistrationData } = useRegistration();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -33,9 +34,9 @@ const NameStep = () => {
           <Text style={styles.title} children="Tên của bạn là" />
           <TextInput
             style={styles.input}
-            value={name}
+            value={registrationData.name}
             outlineMode="bottom"
-            onChangeText={setName}
+            onChangeText={(value) => updateRegistrationData('name', value)}
             placeholder="Nhập tên của bạn"
             // autoFocus
           />
@@ -45,9 +46,9 @@ const NameStep = () => {
           </Text>
         </ScrollView>
         <Button
-          style={[styles.button, !name && styles.buttonDisabled]}
+          style={[styles.button, !registrationData.name && styles.buttonDisabled]}
           onPress={() => router.push("/register/BirthStep")}
-          disabled={!name}
+          disabled={!registrationData.name}
           title="Tiếp tục"
         />
       </KeyboardAvoidingView>

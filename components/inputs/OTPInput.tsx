@@ -1,7 +1,12 @@
 import React, { useState, useRef } from "react";
 import { View, TextInput, StyleSheet } from "react-native";
 
-const OTPInput: React.FC<{ length: number }> = ({ length }) => {
+interface OTPInputProps {
+  length: number;
+  onCodeChanged?: (code: string) => void;
+}
+
+const OTPInput: React.FC<OTPInputProps> = ({ length, onCodeChanged }) => {
   const [otp, setOtp] = useState<string[]>(new Array(length).fill(""));
   const inputRefs = useRef<(TextInput | null)[]>(new Array(length).fill(null));
 
@@ -10,6 +15,12 @@ const OTPInput: React.FC<{ length: number }> = ({ length }) => {
       const newOtp = [...otp];
       newOtp[index] = text;
       setOtp(newOtp);
+
+      // Notify parent component of the full code
+      if (onCodeChanged) {
+        const fullCode = newOtp.join('');
+        onCodeChanged(fullCode);
+      }
 
       // Move to the next input
       if (text && index < length - 1) {

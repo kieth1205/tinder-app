@@ -13,8 +13,8 @@ import { StatusBar } from "expo-status-bar"; // Import StatusBar
 
 import { useColorScheme } from "@/components/useColorScheme";
 import AuthProvider from "@/context/AuthProvider";
+import { RegistrationProvider } from "@/context/RegistrationContext";
 import Toast from "react-native-toast-message";
-import { StatusBar } from "expo-status-bar";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -46,7 +46,7 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar translucent  backgroundColor="transparent" />
+      <StatusBar translucent backgroundColor="transparent" />
       {/* Cập nhật StatusBar */}
       <RootLayoutNav />
     </>
@@ -58,23 +58,25 @@ function RootLayoutNav() {
 
   return (
     <AuthProvider>
-      <StatusBar
-        style={colorScheme === "dark" ? "light" : "dark"}
-        translucent
-      />
-      <Toast />
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: "slide_from_right",
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        </Stack>
-      </ThemeProvider>
+      <RegistrationProvider>
+        <StatusBar
+          style={colorScheme === "dark" ? "light" : "dark"}
+          translucent
+        />
+        <Toast />
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: "slide_from_right",
+            }}
+          >
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          </Stack>
+        </ThemeProvider>
+      </RegistrationProvider>
     </AuthProvider>
   );
 }

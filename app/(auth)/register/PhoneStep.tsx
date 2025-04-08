@@ -5,18 +5,22 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import React, { useState } from "react";
+import React from "react";
+import { useRegistration } from "@/context/RegistrationContext";
 import { Button } from "@/components/button/ContinueButton";
 import { Ionicons } from "@expo/vector-icons";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { TextInput } from "@/components/inputs";
 
 const PhoneStep = () => {
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const { registrationData, updateRegistrationData } = useRegistration();
 
   const handleNext = () => {
     router.push("/register/NameStep");
-    console.log("Phone number:", phoneNumber);
+  };
+
+  const handlePhoneChange = (value: string) => {
+    updateRegistrationData('phoneNumber', value);
   };
 
   return (
@@ -36,20 +40,10 @@ const PhoneStep = () => {
         placeholder="Số điện thoại"
         keyboardType="phone-pad"
         outlineMode="bottom"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
+        value={registrationData.phoneNumber}
+        onChangeText={handlePhoneChange}
       />
-      <Text style={styles.description}>
-        Chúng tôi sẽ gửi tin nhắn có mã xác minh. Có thể áp dụng cước tin nhắn
-        và dữ liệu. &nbsp;
-        <Link href="/modal" asChild>
-          <Text style={{ textDecorationLine: "underline" }}>
-            Tìm hiểu điều gì sẽ xảy ra khi số của bạn thay đổi
-          </Text>
-        </Link>
-      </Text>
-
-      <Button title="Tiếp tục" gradient onPress={handleNext} />
+      <Button title="Tiếp tục" onPress={handleNext} />
     </View>
   );
 };
@@ -60,6 +54,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "white",
   },
   title: {
     fontSize: 38.29,
