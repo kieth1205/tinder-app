@@ -14,6 +14,7 @@ import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
 import { router } from "expo-router";
 import { Button } from "@/components/button/ContinueButton";
+import { INTEREST } from "@/types";
 
 const interests = [
   { id: "1", name: "Âm nhạc", icon: "music" },
@@ -28,9 +29,9 @@ const InterestStep = () => {
   const { registrationData, updateRegistrationData } = useRegistration();
 
   const toggleInterest = (id: string) => {
-    const updatedInterests = registrationData.interests.includes(id)
-      ? registrationData.interests.filter((i) => i !== id)
-      : [...registrationData.interests, id];
+    const updatedInterests = registrationData.interests?.includes(id as any)
+      ? registrationData.interests?.filter((i) => i !== id)
+      : [...(registrationData.interests || []), id];
 
     updateRegistrationData('interests', updatedInterests);
   };
@@ -67,14 +68,14 @@ const InterestStep = () => {
           <TouchableOpacity
             style={[
               styles.interestCard,
-              registrationData.interests.includes(item.id) && styles.selectedCard,
+              (registrationData.interests || []).includes(item.id as any) && styles.selectedCard,
             ]}
             onPress={() => toggleInterest(item.id)}
           >
             <MaterialCommunityIcons
               name={item.icon as any}
               size={28}
-              color={registrationData.interests.includes(item.id) ? "#FF5864" : "#666"}
+              color={((registrationData.interests || []) as INTEREST[]).includes(item.id as any) ? "#FF5864" : "#666"}
             />
             <Text style={styles.interestText}>{item.name}</Text>
           </TouchableOpacity>

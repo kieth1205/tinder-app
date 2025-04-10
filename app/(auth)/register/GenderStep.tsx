@@ -13,14 +13,15 @@ import { Button } from "@/components/button/ContinueButton";
 import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
 import { useRegistration } from "@/context/RegistrationContext";
+import { GENDER } from "@/types";
 
 const GenderStep = () => {
   const { registrationData, updateRegistrationData } = useRegistration();
-  const [selectedGender, setSelectedGender] = useState<string | null>(registrationData.gender || "male");
+  const [selectedGender, setSelectedGender] = useState<GENDER | null>(registrationData.gender || "MALE");
 
   const genderOptions = [
-    { id: "male", label: "Nam", icon: "male" },
-    { id: "female", label: "Nữ", icon: "female" },
+    { id: "MALE", label: "Nam", icon: "male" },
+    { id: "FEMALE", label: "Nữ", icon: "female" },
   ];
 
   const handleNext = () => {
@@ -43,7 +44,7 @@ const GenderStep = () => {
                 styles.genderOption,
                 selectedGender === option.id && styles.selectedOption,
               ]}
-              onPress={() => setSelectedGender(option.id)}
+              onPress={() => setSelectedGender(option.id as GENDER)}
             >
               <Ionicons
                 name={option.icon as any}

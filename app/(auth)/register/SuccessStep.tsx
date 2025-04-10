@@ -71,7 +71,7 @@ const SuccessStep = () => {
         contentContainerStyle={styles.ruleList}
       />
       <Button
-        title="Continue"
+        title="Tiếp tục"
         onPress={() => router.push("/(tabs)")}
         gradient
       />

@@ -1,22 +1,33 @@
+import { ALCOHOL_CONSUMPTION, COMMUNICATION_STYLE, DIETARY_PREFERENCE, EDUCATION, EXERCISE_FREQUENCY, FUTURE_FAMILY, GENDER, INTEREST, LOOKING_FOR, LOVE_LANGUAGE, PETS, SLEEP_PATTERN, SMOKING_PREFERENCE, SOCIAL_MEDIA_USAGE, ZODIAC_SIGN } from '@/types';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 // Define the shape of our registration data
 interface RegistrationData {
-  phoneNumber: string;
-  name: string;
-  birthDate: string;
-  gender: string;
-  interests: string[];
-  photos: string[];
-  // Add other fields as needed
+  phoneNumber: string; // OK
+  name: string; // OK
+  birthDate: string; // OK
+  gender?: GENDER; // OK
+  images: string[]; // NOT OK
+  shortVideo: string; // NOT OK
+  password: string; // NOT OK
+  rawProfile: string; // NOT OK
 
-  password: string;
-  rawProfile: string;
   // Enum
-  lookingFor: string;
-  language: string;
-  zodiacSign: string;
-
+  interests?: INTEREST[]; // NOT OK
+  lookingFor?: LOOKING_FOR; // NOT OK
+  language?: string; // NOT OK
+  zodiacSign?: ZODIAC_SIGN; // NOT OK
+  education?: EDUCATION; // NOT OK
+  futureFamily?: FUTURE_FAMILY; // NOT OK
+  communicationStyle?: COMMUNICATION_STYLE; // NOT OK
+  loveLanguage?: LOVE_LANGUAGE; // NOT OK
+  pets?: PETS; // NOT OK
+  alcoholConsumption?: ALCOHOL_CONSUMPTION; // NOT OK
+  smoking?: SMOKING_PREFERENCE; // NOT OK
+  exerciseHabit?: EXERCISE_FREQUENCY; // NOT OK
+  diet?: DIETARY_PREFERENCE; // NOT OK
+  socialMediaActivity?: SOCIAL_MEDIA_USAGE; // NOT OK
+  sleepHabit?: SLEEP_PATTERN; // NOT OK
 }
 
 // Define the context shape with data and update functions
@@ -34,10 +45,10 @@ const initialRegistrationData: RegistrationData = {
   phoneNumber: '',
   name: '',
   birthDate: '',
-  gender: '',
-  interests: [],
-  photos: [],
-
+  images: [],
+  shortVideo: '',
+  password: '',
+  rawProfile: '',
 };
 
 // Provider component

@@ -1,4 +1,4 @@
-export type GENDER = "MALE" | "FEMALE" | "OTHER";
+export type GENDER = "MALE" | "FEMALE";
 
 export type LOOKING_FOR =
     | "NGUOI_YEU"

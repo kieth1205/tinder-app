@@ -16,7 +16,7 @@ const PhoneStep = () => {
   const { registrationData, updateRegistrationData } = useRegistration();
 
   const handleNext = () => {
-    router.push("/register/NameStep");
+    router.push("/register/StyleStep");
   };
 
   const handlePhoneChange = (value: string) => {
