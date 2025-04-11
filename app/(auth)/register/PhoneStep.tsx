@@ -39,7 +39,7 @@ const PhoneStep = () => {
       return;
     }
 
-    router.push("/register/NameStep");
+    router.push("/register/PhotosStep");
   };
 
   const handlePhoneChange = (value: string) => {

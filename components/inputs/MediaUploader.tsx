@@ -21,10 +21,7 @@ interface MediaUploaderProps {
     maxFiles?: number;
     allowedTypes?: MediaType[];
     maxFileSize?: number; // in bytes
-    onUploadComplete?: (result: any) => void;
-    onUploadError?: (error: Error) => void;
-    uploadUrl?: string;
-    headers?: Record<string, string>;
+    onMediaSelected?: (selectedMedia: MediaItem[]) => void;
     columns?: number;
 }
 
@@ -32,14 +29,10 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     maxFiles = 6,
     allowedTypes = ['image', 'video'],
     maxFileSize = 10 * 1024 * 1024, // 10MB default
-    onUploadComplete,
-    onUploadError,
-    uploadUrl,
-    headers = {},
+    onMediaSelected,
     columns = 3,
 }) => {
     const [media, setMedia] = useState<MediaItem[]>([]);
-    const [uploading, setUploading] = useState<boolean>(false);
 
     const screenWidth = Dimensions.get('window').width;
     const itemMargin = 10;
@@ -130,7 +123,13 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
                 fileSize: asset.fileSize,
             };
 
-            setMedia([...media, newMedia]);
+            const updatedMedia = [...media, newMedia];
+            setMedia(updatedMedia);
+            
+            // Notify parent component about selected media
+            if (onMediaSelected) {
+                onMediaSelected(updatedMedia);
+            }
         }
     };
 
@@ -152,7 +151,13 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
                 fileSize: asset.fileSize,
             };
 
-            setMedia([...media, newMedia]);
+            const updatedMedia = [...media, newMedia];
+            setMedia(updatedMedia);
+            
+            // Notify parent component about selected media
+            if (onMediaSelected) {
+                onMediaSelected(updatedMedia);
+            }
         }
     };
 
@@ -210,67 +215,14 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         const updatedMedia = [...media];
         updatedMedia.splice(index, 1);
         setMedia(updatedMedia);
-    };
-
-    const uploadMedia = async (): Promise<void> => {
-        if (media.length === 0) {
-            alert('Vui lòng chọn ít nhất một file để tải lên');
-            return;
-        }
-
-        setUploading(true);
-
-        try {
-            if (!uploadUrl) {
-                // Mô phỏng upload
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                alert('Tải lên thành công (mô phỏng)!');
-            } else {
-                // Thực hiện upload thực tế
-                const formData = new FormData();
-
-                media.forEach((item, index) => {
-                    formData.append('files', {
-                        uri: item.uri,
-                        type: item.type === 'image' ? 'image/jpeg' : 'video/mp4',
-                        name: item.name,
-                    } as any);
-                });
-
-                const response = await fetch(uploadUrl, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        ...headers,
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Upload failed with status: ${response.status}`);
-                }
-
-                const result = await response.json();
-
-                if (onUploadComplete) {
-                    onUploadComplete(result);
-                }
-
-                alert('Tải lên thành công!');
-            }
-
-            setMedia([]);
-        } catch (error) {
-            console.error('Upload error:', error);
-            alert('Đã xảy ra lỗi khi tải lên. Vui lòng thử lại.');
-
-            if (onUploadError && error instanceof Error) {
-                onUploadError(error);
-            }
-        } finally {
-            setUploading(false);
+        
+        // Notify parent component about updated media
+        if (onMediaSelected) {
+            onMediaSelected(updatedMedia);
         }
     };
+
+
 
     const renderMediaItem = (item: MediaItem, index: number): React.ReactNode => {
         return (
@@ -334,7 +286,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
                         }
                     ]}
                     onPress={pickMedia}
-                    disabled={uploading}
                 >
                     <View style={styles.addButton}>
                         <MaterialIcons name="add" size={24} color="white" />
@@ -353,25 +304,6 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
                     {renderGrid()}
                 </View>
             </ScrollView>
-
-            {media.length > 0 && (
-                <TouchableOpacity
-                    style={[styles.uploadButton, uploading ? styles.disabledButton : null]}
-                    onPress={uploadMedia}
-                    disabled={uploading}
-                >
-                    {uploading ? (
-                        <ActivityIndicator color="white" size="small" />
-                    ) : (
-                        <>
-                            <MaterialIcons name="cloud-upload" size={24} color="white" />
-                            <Text style={styles.uploadButtonText}>
-                                Tải lên {media.length} file
-                            </Text>
-                        </>
-                    )}
-                </TouchableOpacity>
-            )}
         </View>
     );
 };
@@ -379,13 +311,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: '#f5f5f5',
     },
     mediaGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         marginBottom: 20,
     },
     mediaItem: {
