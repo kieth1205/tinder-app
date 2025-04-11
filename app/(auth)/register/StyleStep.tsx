@@ -12,7 +12,8 @@ import { Button } from "@/components/button/ContinueButton";
 import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
 import { useRegistration } from "@/context/RegistrationContext";
-import { ALCOHOL_CONSUMPTION, SMOKING_PREFERENCE } from "@/types";
+import { ALCOHOL_CONSUMPTION, EXERCISE_FREQUENCY, PETS, SMOKING_PREFERENCE } from "@/types";
+import { STEPS, TOTAL_STEPS } from "./_layout";
 
 const StyleStep = () => {
     const { registrationData, updateRegistrationData } = useRegistration();
@@ -24,9 +25,15 @@ const StyleStep = () => {
     const [selectedSmoking, setSelectedSmoking] = useState<SMOKING_PREFERENCE | null>(
         registrationData.smoking || null
     );
+    const [selectedExercise, setSelectedExercise] = useState<EXERCISE_FREQUENCY | null>(
+        registrationData.exerciseHabit || null
+    );
+    const [selectedPet, setSelectedPet] = useState<PETS | null>(
+        registrationData.pets || null
+    );
 
     // Alcohol consumption options
-    const alcoholOptions = [
+    const alcoholOptions: { id: ALCOHOL_CONSUMPTION, label: string }[] = [
         { id: "KHONG_DANH_CHO_MINH", label: "Không dành cho mình" },
         { id: "LUON_TINH_TAO", label: "Luôn tỉnh táo" },
         { id: "UONG_CO_TRACH_NGHIEM", label: "Uống có trách nhiệm" },
@@ -36,7 +43,7 @@ const StyleStep = () => {
     ];
 
     // Smoking preference options
-    const smokingOptions = [
+    const smokingOptions: { id: SMOKING_PREFERENCE, label: string }[] = [
         { id: "HUT_THUOC_VOI_BAN_BE", label: "Hút thuốc với bạn bè" },
         { id: "HUT_THUOC_KHI_NHAU", label: "Hút thuốc khi nhậu" },
         { id: "KHONG_HUT_THUOC", label: "Không hút thuốc" },
@@ -44,23 +51,70 @@ const StyleStep = () => {
         { id: "DANG_CO_GANG_BO", label: "Đang cố gắng bỏ" },
     ];
 
-    const handleNext = () => {
-        // Update context with selected values
-        if (selectedAlcohol) {
-            updateRegistrationData('alcoholConsumption', selectedAlcohol);
+    const exerciseHabitOptions: { id: EXERCISE_FREQUENCY, label: string }[] = [
+        { id: "HANG_NGAY", label: "Hàng ngày" },
+        { id: "THUONG_XUYEN", label: "Hàng tuần" },
+        { id: "THINH_THOANG", label: "Hàng tháng" },
+        { id: "KHONG_TAP", label: "Không tập" },
+    ];
+
+    // Pet options
+    const petOptions: { id: PETS, label: string }[] = [
+        { id: "CHO", label: "Chó" },
+        { id: "MEO", label: "Mèo" },
+        { id: "BO_SAT", label: "Bò sát" },
+        { id: "DONG_VAT_LUONG_CU", label: "Động vật lưỡng cư" },
+        { id: "LOAI_CHIM", label: "Loài chim" },
+        { id: "CA", label: "Cá" },
+        { id: "RUA", label: "Rùa" },
+        { id: "HAMSTER", label: "Hamster" },
+        { id: "THO", label: "Thỏ" },
+        { id: "KHAC", label: "Khác" },
+        { id: "KHONG_NUOI_THU_CUNG", label: "Không nuôi thú cưng" },
+        { id: "MUON_NUOI_THU_CUNG", label: "Muốn nuôi thú cưng" },
+        { id: "DI_UNG_VOI_DONG_VAT", label: "Dị ứng với động vật" },
+    ]
+
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    const validateForm = () => {
+        const newErrors: { [key: string]: string } = {};
+        
+        if (!selectedAlcohol) {
+            newErrors.alcohol = 'Vui lòng chọn thói quen uống rượu';
+        }
+        if (!selectedSmoking) {
+            newErrors.smoking = 'Vui lòng chọn thói quen hút thuốc';
+        }
+        if (!selectedExercise) {
+            newErrors.exercise = 'Vui lòng chọn tần suất tập thể dục';
+        }
+        if (!selectedPet) {
+            newErrors.pet = 'Vui lòng chọn thói quen nuôi thú cưng';
         }
 
-        if (selectedSmoking) {
-            updateRegistrationData('smoking', selectedSmoking);
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleNext = () => {
+        if (!validateForm()) {
+            return;
         }
+
+        // Update context with selected values
+        updateRegistrationData('alcoholConsumption', selectedAlcohol!);
+        updateRegistrationData('smoking', selectedSmoking!);
+        updateRegistrationData('exerciseHabit', selectedExercise!);
+        updateRegistrationData('pets', selectedPet!);
 
         // Navigate to next step
-        router.push("/register/PhotosStep");
+        router.push("/register/AboutYouStep");
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <ProgressBar step={5} totalSteps={7} />
+            <ProgressBar step={STEPS.StyleStep} totalSteps={TOTAL_STEPS} />
             <AuthHeader onBack={() => router.back()} />
             <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
                 <View style={styles.content}>
@@ -75,6 +129,7 @@ const StyleStep = () => {
                             <Text style={styles.questionIcon}>🍺</Text>
                             <Text style={styles.questionText}>Bạn thường uống rượu bia như thế nào?</Text>
                         </View>
+                        {errors.alcohol && <Text style={styles.errorText}>{errors.alcohol}</Text>}
 
                         <View style={styles.optionsContainer}>
                             {alcoholOptions.map((option) => (
@@ -105,6 +160,7 @@ const StyleStep = () => {
                             <Text style={styles.questionIcon}>🚬</Text>
                             <Text style={styles.questionText}>Bạn có hay hút thuốc không?</Text>
                         </View>
+                        {errors.smoking && <Text style={styles.errorText}>{errors.smoking}</Text>}
 
                         <View style={styles.optionsContainer}>
                             {smokingOptions.map((option) => (
@@ -129,6 +185,67 @@ const StyleStep = () => {
                         </View>
                     </View>
 
+                    {/* Exercise habit question */}
+                    <View style={styles.questionContainer}>
+                        <View style={styles.questionHeader}>
+                            <Text style={styles.questionIcon}>🏋️‍♂️</Text>
+                            <Text style={styles.questionText}>Tần suất tập luyện thể thao của bạn?</Text>
+                        </View>
+                        {errors.exercise && <Text style={styles.errorText}>{errors.exercise}</Text>}
+
+                        <View style={styles.optionsContainer}>
+                            {exerciseHabitOptions.map((option) => (
+                                <TouchableOpacity
+                                    key={option.id}
+                                    style={[
+                                        styles.optionButton,
+                                        selectedExercise === option.id && styles.selectedOption,
+                                    ]}
+                                    onPress={() => setSelectedExercise(option.id as EXERCISE_FREQUENCY)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.optionText,
+                                            selectedExercise === option.id && styles.selectedOptionText
+                                        ]}
+                                    >
+                                        {option.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+
+                    {/* Pets question */}
+                    <View style={styles.questionContainer}>
+                        <View style={styles.questionHeader}>
+                            <Text style={styles.questionIcon}>🐾</Text>
+                            <Text style={styles.questionText}>Thú cưng của bạn?</Text>
+                        </View>
+
+                        <View style={styles.optionsContainer}>
+                            {petOptions.map((option) => (
+                                <TouchableOpacity
+                                    key={option.id}
+                                    style={[
+                                        styles.optionButton,
+                                        selectedPet === option.id && styles.selectedOption,
+                                    ]}
+                                    onPress={() => setSelectedPet(option.id as PETS)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.optionText,
+                                            selectedPet === option.id && styles.selectedOptionText
+                                        ]}
+                                    >
+                                        {option.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+
                     {/* Continue button */}
                     <Button
                         style={styles.button}
@@ -144,6 +261,12 @@ const StyleStep = () => {
 export default StyleStep;
 
 const styles = StyleSheet.create({
+    errorText: {
+        color: '#FF3B30',
+        fontSize: 12,
+        marginTop: 4,
+        marginLeft: 8,
+    },
     container: {
         flex: 1,
         backgroundColor: "#fff",
@@ -168,6 +291,9 @@ const styles = StyleSheet.create({
     },
     questionContainer: {
         marginBottom: 30,
+        borderBottomWidth: 1,
+        borderBottomColor: "#E8E6EA",
+        paddingBottom: 24,
     },
     questionHeader: {
         flexDirection: "row",
@@ -189,8 +315,8 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     optionButton: {
-        paddingHorizontal: 15,
-        paddingVertical: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
         borderRadius: 50,
         backgroundColor: "#f3f3f3",
         marginBottom: 8,
@@ -207,7 +333,7 @@ const styles = StyleSheet.create({
     },
     selectedOptionText: {
         color: "#fff",
-        fontWeight: "500",
+        // fontWeight: "500",
     },
     button: {
         marginTop: 20,

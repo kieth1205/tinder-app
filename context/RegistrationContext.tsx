@@ -14,20 +14,27 @@ interface RegistrationData {
 
   // Enum
   interests?: INTEREST[]; // NOT OK
-  lookingFor?: LOOKING_FOR; // NOT OK
+  lookingFor?: LOOKING_FOR; // OK
   language?: string; // NOT OK
-  zodiacSign?: ZODIAC_SIGN; // NOT OK
-  education?: EDUCATION; // NOT OK
+  zodiacSign?: ZODIAC_SIGN; // OK
+  education?: EDUCATION; // OK
   futureFamily?: FUTURE_FAMILY; // NOT OK
-  communicationStyle?: COMMUNICATION_STYLE; // NOT OK
-  loveLanguage?: LOVE_LANGUAGE; // NOT OK
-  pets?: PETS; // NOT OK
-  alcoholConsumption?: ALCOHOL_CONSUMPTION; // NOT OK
-  smoking?: SMOKING_PREFERENCE; // NOT OK
-  exerciseHabit?: EXERCISE_FREQUENCY; // NOT OK
+  communicationStyle?: COMMUNICATION_STYLE; // OK
+  loveLanguage?: LOVE_LANGUAGE; // OK
+
+  // Phong cách sống
+  pets?: PETS; // OK
+  alcoholConsumption?: ALCOHOL_CONSUMPTION; // OK
+  smoking?: SMOKING_PREFERENCE; // OK
+  exerciseHabit?: EXERCISE_FREQUENCY; // OK
+  // Phong cách sống
+
   diet?: DIETARY_PREFERENCE; // NOT OK
   socialMediaActivity?: SOCIAL_MEDIA_USAGE; // NOT OK
   sleepHabit?: SLEEP_PATTERN; // NOT OK
+
+  // Preferences
+  preferredDistance?: number; // OK Maximum distance for matches (in km)
 }
 
 // Define the context shape with data and update functions

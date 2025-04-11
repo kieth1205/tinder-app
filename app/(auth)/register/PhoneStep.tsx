@@ -4,6 +4,7 @@ import {
   View,
   TouchableOpacity,
   Platform,
+  Alert,
 } from "react-native";
 import React from "react";
 import { useRegistration } from "@/context/RegistrationContext";
@@ -15,12 +16,36 @@ import { TextInput } from "@/components/inputs";
 const PhoneStep = () => {
   const { registrationData, updateRegistrationData } = useRegistration();
 
+  const isValidVietnamesePhoneNumber = (phone: string) => {
+    // Vietnamese phone number format: 
+    // Start with 0, followed by 9 digits
+    // Or start with +84, followed by 9 digits
+    return /^(0|\+84)[0-9]{9}$/.test(phone.replace(/\s/g, ''));
+  };
+
   const handleNext = () => {
-    router.push("/register/StyleStep");
+    const phone = registrationData.phoneNumber?.trim() || '';
+
+    if (!phone) {
+      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại");
+      return;
+    }
+
+    if (!isValidVietnamesePhoneNumber(phone)) {
+      Alert.alert(
+        "Lỗi",
+        "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam (VD: 0912345678 hoặc +84912345678)"
+      );
+      return;
+    }
+
+    router.push("/register/NameStep");
   };
 
   const handlePhoneChange = (value: string) => {
-    updateRegistrationData('phoneNumber', value);
+    // Only allow numbers, spaces, and + character
+    const sanitizedValue = value.replace(/[^0-9\s+]/g, '');
+    updateRegistrationData('phoneNumber', sanitizedValue)
   };
 
   return (

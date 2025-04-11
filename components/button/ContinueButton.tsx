@@ -26,7 +26,7 @@ export const Button = ({
   title,
   onPress,
   variant = "primary",
-  size = "small",
+  size = "medium",
   disabled,
   loading,
   style,
@@ -81,7 +81,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 50,
-    paddingVertical: 12,
   },
   button_primary: {
     backgroundColor: "#FE3C72",

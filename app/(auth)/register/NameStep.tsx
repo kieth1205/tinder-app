@@ -6,21 +6,30 @@ import { router } from "expo-router";
 import React from "react";
 import { useRegistration } from "@/context/RegistrationContext";
 import {
-  View,
   Text,
   StyleSheet,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from "react-native";
+import { STEPS, TOTAL_STEPS } from "./_layout";
 
 const NameStep = () => {
   const { registrationData, updateRegistrationData } = useRegistration();
 
+  const handleNext = () => {
+    if (!registrationData.name) {
+      Alert.alert("Lỗi", "Vui lòng nhập tên");
+      return;
+    }
+    router.push("/register/BirthStep");
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <ProgressBar step={1} totalSteps={6} />
+      <ProgressBar step={STEPS.NameStep} totalSteps={TOTAL_STEPS} />
       <AuthHeader leftIcon="close" onBack={() => router.back()} />
 
       <KeyboardAvoidingView
@@ -38,7 +47,7 @@ const NameStep = () => {
             outlineMode="bottom"
             onChangeText={(value) => updateRegistrationData('name', value)}
             placeholder="Nhập tên của bạn"
-            // autoFocus
+          // autoFocus
           />
           <Text style={styles.hint}>
             Đây là cách nó sẽ xuất hiện trong Tinder và bạn sẽ không thể thay
@@ -47,7 +56,7 @@ const NameStep = () => {
         </ScrollView>
         <Button
           style={[styles.button, !registrationData.name && styles.buttonDisabled]}
-          onPress={() => router.push("/register/BirthStep")}
+          onPress={handleNext}
           disabled={!registrationData.name}
           title="Tiếp tục"
         />
@@ -80,7 +89,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontSize: 16,
     marginBottom: 12,
-    color: "gray",
+    color: "#000",
   },
   hint: {
     color: "#8E8E8E",

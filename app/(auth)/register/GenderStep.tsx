@@ -14,6 +14,7 @@ import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
 import { useRegistration } from "@/context/RegistrationContext";
 import { GENDER } from "@/types";
+import { STEPS, TOTAL_STEPS } from "./_layout";
 
 const GenderStep = () => {
   const { registrationData, updateRegistrationData } = useRegistration();
@@ -26,12 +27,12 @@ const GenderStep = () => {
 
   const handleNext = () => {
     updateRegistrationData('gender', selectedGender);
-    router.push("/register/InterestStep");
+    router.push("/register/DistanceStep");
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ProgressBar step={3} totalSteps={6} />
+      <ProgressBar step={STEPS.GenderStep} totalSteps={TOTAL_STEPS} />
       <AuthHeader onBack={() => router.back()} />
       <View style={styles.content}>
         <Text style={styles.title}>Bạn là</Text>

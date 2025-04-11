@@ -13,6 +13,7 @@ import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
 import { router } from "expo-router";
 import { Button } from "@/components/button/ContinueButton";
+import { STEPS, TOTAL_STEPS } from "./_layout";
 
 const PhotosStep = () => {
   const [photos, setPhotos] = useState<string[]>([]);
@@ -27,7 +28,7 @@ const PhotosStep = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ProgressBar step={5} totalSteps={6} />
+      <ProgressBar step={STEPS.PhotosStep} totalSteps={TOTAL_STEPS} />
       <AuthHeader onBack={() => router.back()} />
       <Text style={styles.title}>Add photos</Text>
       <Text style={styles.subtitle}>Add at least 2 photos to continue</Text>

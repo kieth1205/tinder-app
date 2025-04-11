@@ -14,6 +14,7 @@ import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { Button } from "@/components/button/ContinueButton";
 import BirthdayInput from "@/components/inputs/BirthdayInput";
 import { useRegistration } from "@/context/RegistrationContext";
+import { STEPS, TOTAL_STEPS } from "./_layout";
 
 const BirthStep = () => {
   const { registrationData, updateRegistrationData } = useRegistration();
@@ -57,12 +58,16 @@ const BirthStep = () => {
   // Handler for date changes
   const handleDateChange = (value: string) => {
     setDate(value);
-    updateRegistrationData('birthDate', value);
+  };
+
+  const handleNext = () => {
+    updateRegistrationData('birthDate', date);
+    router.push("/register/GenderStep");
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ProgressBar step={2} totalSteps={5} />
+      <ProgressBar step={STEPS.BirthStep} totalSteps={TOTAL_STEPS} />
       <AuthHeader onBack={() => router.back()} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -88,7 +93,7 @@ const BirthStep = () => {
         </ScrollView>
         <Button
           style={[styles.button, (!date || !isValidAge()) && styles.buttonDisabled]}
-          onPress={() => router.push("/register/GenderStep")}
+          onPress={handleNext}
           disabled={!date || !isValidAge()}
           title="Tiếp tục"
         />

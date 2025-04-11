@@ -68,12 +68,11 @@ export const TextInput = ({
           borderWidth: outlineMode === "both" ? 1 : 0,
           borderBottomWidth: ["bottom", "both"].includes(outlineMode) ? 1 : 0,
           borderTopWidth: ["top", "both"].includes(outlineMode) ? 1 : 0,
-          placeHolderTextColor: "red",
+          placeHolderTextColor: "#8E8E8E",
           ...(style as any),
         }}
         {...props}
       />
-
       {error && (
         <Text style={{ color: "#ee4d2d", fontSize: 12, marginTop: 4 }}>
           {error}
