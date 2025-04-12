@@ -30,14 +30,14 @@ export default function RegisterIndex() {
       <View style={styles.contentContainer}>
         <Text style={styles.oops}>Oops!</Text>
         <Text style={styles.description}>
-          We couldn’t find a Tinder account connected to that Facebook Account.
+          Chúng tôi không thể tìm thấy tài khoản của bạn
         </Text>
       </View>
       <View style={styles.buttonContainer}>
         <Button
-          title="CREATE NEW ACCOUNT"
+          title="Tạo tài khoản"
           gradient
-          onPress={() => router.push("/register/PhoneStep")}
+          onPress={() => router.push("/register/EmailStep")}
         />
       </View>
     </View>

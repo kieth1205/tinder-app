@@ -12,7 +12,7 @@ import { Button } from "@/components/button/ContinueButton";
 import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
 import { useRegistration } from "@/context/RegistrationContext";
-import { ALCOHOL_CONSUMPTION, EXERCISE_FREQUENCY, PETS, SMOKING_PREFERENCE } from "@/types";
+import { ALCOHOL_CONSUMPTION, DIETARY_PREFERENCE, EXERCISE_FREQUENCY, PETS, SLEEP_PATTERN, SMOKING_PREFERENCE, SOCIAL_MEDIA_USAGE } from "@/types";
 import { STEPS, TOTAL_STEPS } from "./_layout";
 
 const StyleStep = () => {
@@ -30,6 +30,15 @@ const StyleStep = () => {
     );
     const [selectedPet, setSelectedPet] = useState<PETS | null>(
         registrationData.pets || null
+    );
+    const [selectedDietaryPreference, setSelectedDietaryPreference] = useState<DIETARY_PREFERENCE | null>(
+        registrationData.diet || null
+    );
+    const [selectedSocialMedia, setSelectedSocialMedia] = useState<SOCIAL_MEDIA_USAGE | null>(
+        registrationData.socialMediaActivity || null
+    );
+    const [selectedSleepPattern, setSelectedSleepPattern] = useState<SLEEP_PATTERN | null>(
+        registrationData.sleepHabit || null
     );
 
     // Alcohol consumption options
@@ -75,6 +84,31 @@ const StyleStep = () => {
         { id: "DI_UNG_VOI_DONG_VAT", label: "Dị ứng với động vật" },
     ]
 
+    // Dietary preference options
+    const dietaryOptions: { id: DIETARY_PREFERENCE, label: string }[] = [
+        { id: "CHI_AN_THIT", label: "Chỉ ăn thịt" },
+        { id: "AN_CHAY", label: "Ăn chay" },
+        { id: "AN_THUAN_CHAY", label: "Ăn thuần chay (Vegan)" },
+        { id: "CHI_AN_HAI_SAN_RAU_CU", label: "Chỉ ăn hải sản và rau củ (Pescatarian)" }, 
+        { id: "KHONG_AN_KIENG", label: "Không ăn kiêng" },
+        { id: "KHAC", label: "Khác" },
+    ];
+
+    // Social media usage options
+    const socialMediaOptions: { id: SOCIAL_MEDIA_USAGE, label: string }[] = [
+        { id: "INFLUENCER", label: "Tôi là influencer" },
+        { id: "HOAT_DONG_TICH_CUC", label: "Hoạt động tích cực" },
+        { id: "LUOT_DAO_AM_THAM", label: "Lướt đảo âm thầm" },
+        { id: "KHONG_DUNG_MANG", label: "Không dùng mạng xã hội" },
+    ];
+
+    // Sleep pattern options
+    const sleepPatternOptions: { id: SLEEP_PATTERN, label: string }[] = [
+        { id: "DAY_SOM", label: "Dậy sớm" },
+        { id: "CU_DEM", label: "Cú đêm" },
+        { id: "GIO_GIAC_LINH_HOAT", label: "Giờ giấc linh hoạt" },
+    ];
+
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     const validateForm = () => {
@@ -92,6 +126,15 @@ const StyleStep = () => {
         if (!selectedPet) {
             newErrors.pet = 'Vui lòng chọn thói quen nuôi thú cưng';
         }
+        if (!selectedDietaryPreference) {
+            newErrors.diet = 'Vui lòng chọn chế độ ăn';
+        }
+        if (!selectedSocialMedia) {
+            newErrors.socialMedia = 'Vui lòng chọn mức độ sử dụng mạng xã hội';
+        }
+        if (!selectedSleepPattern) {
+            newErrors.sleep = 'Vui lòng chọn thói quen ngủ';
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -107,6 +150,9 @@ const StyleStep = () => {
         updateRegistrationData('smoking', selectedSmoking!);
         updateRegistrationData('exerciseHabit', selectedExercise!);
         updateRegistrationData('pets', selectedPet!);
+        updateRegistrationData('diet', selectedDietaryPreference!);
+        updateRegistrationData('socialMediaActivity', selectedSocialMedia!);
+        updateRegistrationData('sleepHabit', selectedSleepPattern!);
 
         // Navigate to next step
         router.push("/register/AboutYouStep");
@@ -237,6 +283,99 @@ const StyleStep = () => {
                                         style={[
                                             styles.optionText,
                                             selectedPet === option.id && styles.selectedOptionText
+                                        ]}
+                                    >
+                                        {option.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+
+                    {/* Dietary preference question */}
+                    <View style={styles.questionContainer}>
+                        <View style={styles.questionHeader}>
+                            <Text style={styles.questionIcon}>🍽️</Text>
+                            <Text style={styles.questionText}>Chế độ ăn uống của bạn?</Text>
+                        </View>
+                        {errors.diet && <Text style={styles.errorText}>{errors.diet}</Text>}
+
+                        <View style={styles.optionsContainer}>
+                            {dietaryOptions.map((option) => (
+                                <TouchableOpacity
+                                    key={option.id}
+                                    style={[
+                                        styles.optionButton,
+                                        selectedDietaryPreference === option.id && styles.selectedOption,
+                                    ]}
+                                    onPress={() => setSelectedDietaryPreference(option.id as DIETARY_PREFERENCE)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.optionText,
+                                            selectedDietaryPreference === option.id && styles.selectedOptionText
+                                        ]}
+                                    >
+                                        {option.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+
+                    {/* Social media usage question */}
+                    <View style={styles.questionContainer}>
+                        <View style={styles.questionHeader}>
+                            <Text style={styles.questionIcon}>📱</Text>
+                            <Text style={styles.questionText}>Mức độ sử dụng mạng xã hội của bạn?</Text>
+                        </View>
+                        {errors.socialMedia && <Text style={styles.errorText}>{errors.socialMedia}</Text>}
+
+                        <View style={styles.optionsContainer}>
+                            {socialMediaOptions.map((option) => (
+                                <TouchableOpacity
+                                    key={option.id}
+                                    style={[
+                                        styles.optionButton,
+                                        selectedSocialMedia === option.id && styles.selectedOption,
+                                    ]}
+                                    onPress={() => setSelectedSocialMedia(option.id as SOCIAL_MEDIA_USAGE)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.optionText,
+                                            selectedSocialMedia === option.id && styles.selectedOptionText
+                                        ]}
+                                    >
+                                        {option.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+
+                    {/* Sleep pattern question */}
+                    <View style={styles.questionContainer}>
+                        <View style={styles.questionHeader}>
+                            <Text style={styles.questionIcon}>😴</Text>
+                            <Text style={styles.questionText}>Thói quen ngủ nghỉ của bạn?</Text>
+                        </View>
+                        {errors.sleep && <Text style={styles.errorText}>{errors.sleep}</Text>}
+
+                        <View style={styles.optionsContainer}>
+                            {sleepPatternOptions.map((option) => (
+                                <TouchableOpacity
+                                    key={option.id}
+                                    style={[
+                                        styles.optionButton,
+                                        selectedSleepPattern === option.id && styles.selectedOption,
+                                    ]}
+                                    onPress={() => setSelectedSleepPattern(option.id as SLEEP_PATTERN)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.optionText,
+                                            selectedSleepPattern === option.id && styles.selectedOptionText
                                         ]}
                                     >
                                         {option.label}

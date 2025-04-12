@@ -1,10 +1,10 @@
-import {
-  StyleSheet,
+import {  
   Text,
   View,
   TouchableOpacity,
   Platform,
   Alert,
+  StyleSheet,
 } from "react-native";
 import React from "react";
 import { useRegistration } from "@/context/RegistrationContext";
@@ -13,39 +13,32 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { TextInput } from "@/components/inputs";
 
-const PhoneStep = () => {
+const EmailStep = () => {
   const { registrationData, updateRegistrationData } = useRegistration();
 
-  const isValidVietnamesePhoneNumber = (phone: string) => {
-    // Vietnamese phone number format: 
-    // Start with 0, followed by 9 digits
-    // Or start with +84, followed by 9 digits
-    return /^(0|\+84)[0-9]{9}$/.test(phone.replace(/\s/g, ''));
+  const isValidEmail = (email: string) => {
+    // Simple email validation regex
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   };
 
   const handleNext = () => {
-    const phone = registrationData.phoneNumber?.trim() || '';
+    const email = registrationData.email?.trim() || '';
 
-    if (!phone) {
-      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại");
+    if (!email) {
+      Alert.alert("Lỗi", "Vui lòng nhập email");
       return;
     }
 
-    if (!isValidVietnamesePhoneNumber(phone)) {
-      Alert.alert(
-        "Lỗi",
-        "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam (VD: 0912345678 hoặc +84912345678)"
-      );
+    if (!isValidEmail(email)) {
+      Alert.alert("Lỗi", "Địa chỉ email không hợp lệ. Vui lòng thử lại.");
       return;
     }
 
-    router.push("/register/PhotosStep");
+    router.push("/register/BirthStep");
   };
 
-  const handlePhoneChange = (value: string) => {
-    // Only allow numbers, spaces, and + character
-    const sanitizedValue = value.replace(/[^0-9\s+]/g, '');
-    updateRegistrationData('phoneNumber', sanitizedValue)
+  const handleEmailChange = (value: string) => {
+    updateRegistrationData("email", value);
   };
 
   return (
@@ -59,21 +52,22 @@ const PhoneStep = () => {
       >
         <Ionicons name="arrow-back" size={28} color="gray" />
       </TouchableOpacity>
-      <Text style={styles.title}>Số điện thoại của bạn là</Text>
+      <Text style={styles.title}>Email của bạn là</Text>
       <TextInput
         style={styles.input}
-        placeholder="Số điện thoại"
-        keyboardType="phone-pad"
+        placeholder="Địa chỉ email"
         outlineMode="bottom"
-        value={registrationData.phoneNumber}
-        onChangeText={handlePhoneChange}
+        value={registrationData.email}
+        onChangeText={handleEmailChange}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
       <Button title="Tiếp tục" onPress={handleNext} />
     </View>
   );
 };
 
-export default PhoneStep;
+export default EmailStep;
 
 const styles = StyleSheet.create({
   container: {

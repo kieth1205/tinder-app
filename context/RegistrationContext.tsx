@@ -1,27 +1,29 @@
+import api from '@/services/api';
 import { ALCOHOL_CONSUMPTION, COMMUNICATION_STYLE, DIETARY_PREFERENCE, EDUCATION, EXERCISE_FREQUENCY, FUTURE_FAMILY, GENDER, INTEREST, LOOKING_FOR, LOVE_LANGUAGE, PETS, SLEEP_PATTERN, SMOKING_PREFERENCE, SOCIAL_MEDIA_USAGE, ZODIAC_SIGN } from '@/types';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { Alert } from 'react-native';
 
 // Define the shape of our registration data
 interface RegistrationData {
-  phoneNumber: string; // OK
+  email: string; // OK
   name: string; // OK
   birthDate: string; // OK
   gender?: GENDER; // OK
-  images: string[]; // NOT OK
+  images: string[]; // OK
   shortVideo: string; // NOT OK
-  password: string; // NOT OK
-  rawProfile: string; // NOT OK
+  password: string; // OK
+  rawProfile: string; // OK
 
   // Enum
-  interests?: INTEREST[]; // NOT OK
+  interests?: INTEREST[]; // OK
   lookingFor?: LOOKING_FOR; // OK
-  language?: string; // NOT OK
+  // language?: string; // NOT OK
   zodiacSign?: ZODIAC_SIGN; // OK
   education?: EDUCATION; // OK
-  futureFamily?: FUTURE_FAMILY; // NOT OK
+  // futureFamily?: FUTURE_FAMILY; // NOT OK 
   communicationStyle?: COMMUNICATION_STYLE; // OK
   loveLanguage?: LOVE_LANGUAGE; // OK
-
+  
   // Phong cách sống
   pets?: PETS; // OK
   alcoholConsumption?: ALCOHOL_CONSUMPTION; // OK
@@ -42,6 +44,7 @@ interface RegistrationContextType {
   registrationData: RegistrationData;
   updateRegistrationData: (field: keyof RegistrationData, value: any) => void;
   resetRegistrationData: () => void;
+  handleRegister: () => Promise<any>;
 }
 
 // Create the context with default values
@@ -49,7 +52,7 @@ const RegistrationContext = createContext<RegistrationContextType | undefined>(u
 
 // Default/initial registration data
 const initialRegistrationData: RegistrationData = {
-  phoneNumber: '',
+  email: '',
   name: '',
   birthDate: '',
   images: [],
@@ -73,12 +76,24 @@ export const RegistrationProvider: React.FC<{ children: ReactNode }> = ({ childr
     setRegistrationData(initialRegistrationData);
   };
 
+  const handleRegister = async () => {
+    try {
+      const res = await api.post('/auth/signup', registrationData);
+      console.log("res", res.data)
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Lỗi", "Đăng ký thất bại");
+      throw err;
+    }
+  };
+
   return (
     <RegistrationContext.Provider
       value={{
         registrationData,
         updateRegistrationData,
         resetRegistrationData,
+        handleRegister
       }}
     >
       {children}
