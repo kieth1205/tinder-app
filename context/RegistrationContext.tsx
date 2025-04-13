@@ -25,15 +25,15 @@ interface RegistrationData {
   loveLanguage?: LOVE_LANGUAGE; // OK
   
   // Phong cách sống
-  pets?: PETS; // OK
+  pet?: PETS; // OK
   alcoholConsumption?: ALCOHOL_CONSUMPTION; // OK
   smoking?: SMOKING_PREFERENCE; // OK
   exerciseHabit?: EXERCISE_FREQUENCY; // OK
   // Phong cách sống
 
-  diet?: DIETARY_PREFERENCE; // NOT OK
-  socialMediaActivity?: SOCIAL_MEDIA_USAGE; // NOT OK
-  sleepHabit?: SLEEP_PATTERN; // NOT OK
+  diet?: DIETARY_PREFERENCE; // OK
+  socialMediaActivity?: SOCIAL_MEDIA_USAGE; // OK
+  sleepHabit?: SLEEP_PATTERN; // OK
 
   // Preferences
   preferredDistance?: number; // OK Maximum distance for matches (in km)
@@ -44,7 +44,6 @@ interface RegistrationContextType {
   registrationData: RegistrationData;
   updateRegistrationData: (field: keyof RegistrationData, value: any) => void;
   resetRegistrationData: () => void;
-  handleRegister: () => Promise<any>;
 }
 
 // Create the context with default values
@@ -76,24 +75,12 @@ export const RegistrationProvider: React.FC<{ children: ReactNode }> = ({ childr
     setRegistrationData(initialRegistrationData);
   };
 
-  const handleRegister = async () => {
-    try {
-      const res = await api.post('/auth/signup', registrationData);
-      console.log("res", res.data)
-    } catch (err) {
-      console.log(err);
-      Alert.alert("Lỗi", "Đăng ký thất bại");
-      throw err;
-    }
-  };
-
   return (
     <RegistrationContext.Provider
       value={{
         registrationData,
         updateRegistrationData,
         resetRegistrationData,
-        handleRegister
       }}
     >
       {children}

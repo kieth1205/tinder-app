@@ -12,6 +12,7 @@ import { Button } from "@/components/button/ContinueButton";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { TextInput } from "@/components/inputs";
+import api from "@/services/api";
 
 const EmailStep = () => {
   const { registrationData, updateRegistrationData } = useRegistration();
@@ -21,7 +22,7 @@ const EmailStep = () => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const email = registrationData.email?.trim() || '';
 
     if (!email) {
@@ -34,7 +35,16 @@ const EmailStep = () => {
       return;
     }
 
-    router.push("/register/BirthStep");
+    const emailExists = await api.post('/auth/check-email', { email }, {
+      requireAuth: false
+    });
+
+    if (emailExists.data.exists) {
+      Alert.alert("Lỗi", "Email này đã được đăng ký");
+      return;
+    }
+
+    router.push("/register/NameStep");
   };
 
   const handleEmailChange = (value: string) => {

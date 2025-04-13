@@ -29,7 +29,7 @@ const StyleStep = () => {
         registrationData.exerciseHabit || null
     );
     const [selectedPet, setSelectedPet] = useState<PETS | null>(
-        registrationData.pets || null
+        registrationData.pet || null
     );
     const [selectedDietaryPreference, setSelectedDietaryPreference] = useState<DIETARY_PREFERENCE | null>(
         registrationData.diet || null
@@ -149,7 +149,7 @@ const StyleStep = () => {
         updateRegistrationData('alcoholConsumption', selectedAlcohol!);
         updateRegistrationData('smoking', selectedSmoking!);
         updateRegistrationData('exerciseHabit', selectedExercise!);
-        updateRegistrationData('pets', selectedPet!);
+        updateRegistrationData('pet', selectedPet!);
         updateRegistrationData('diet', selectedDietaryPreference!);
         updateRegistrationData('socialMediaActivity', selectedSocialMedia!);
         updateRegistrationData('sleepHabit', selectedSleepPattern!);

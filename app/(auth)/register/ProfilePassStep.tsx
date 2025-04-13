@@ -2,13 +2,13 @@ import {
     StyleSheet,
     Text,
     View,
-    TouchableOpacity,
     SafeAreaView,
     TextInput,
     Alert,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
+    ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
 import { router } from "expo-router";
@@ -17,19 +17,21 @@ import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
 import { useRegistration } from "@/context/RegistrationContext";
 import { STEPS, TOTAL_STEPS } from "./_layout";
+import api from "@/services/api";
 
 const ProfilePassStep = () => {
-    const { registrationData, updateRegistrationData, handleRegister } = useRegistration();
+    const { registrationData, updateRegistrationData, resetRegistrationData } = useRegistration();
+    const [isRegistering, setIsRegistering] = useState(false);
 
     // Initialize state with values from context or empty
     const [password, setPassword] = useState<string>(registrationData.password || "");
     const [confirmPassword, setConfirmPassword] = useState<string>("");
-    const [rawProfile, setRawProfile] = useState<string>(registrationData.rawProfile || "");
+    const [rawProfile, setRawProfile] = useState<string>(registrationData.rawProfile || "Tôi là một lập trình viên đam mê công nghệ. Tôi cũng yêu thích du lịch, khám phá những nền văn hóa mới để tìm cảm hứng và mở rộng tầm nhìn. Tôi thích đọc sách về kinh doanh và phát triển bản thân.");
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
-        
+
         if (!password) {
             newErrors.password = 'Vui lòng nhập mật khẩu';
         } else if (password.length < 6) {
@@ -59,9 +61,24 @@ const ProfilePassStep = () => {
         updateRegistrationData('password', password);
         updateRegistrationData('rawProfile', rawProfile);
 
-        await handleRegister().then(() => {
+        try {
+            const res = await api.post('/auth/signup', {
+                ...registrationData,
+                password,
+                rawProfile,
+            }, {
+                requireAuth: false
+            });
+
+            console.log("res", res)
+
+            // Nếu thành công, chuyển đến màn hình SuccessStep
             router.push("/register/SuccessStep");
-        });
+        } catch (error) {
+            // Nếu có lỗi, thông báo sẽ được hiển thị từ hàm handleRegister trong context
+            console.error("Đăng ký thất bại:", error);
+            Alert.alert("Lỗi", "Đăng ký thất bại" + error);
+        }
     };
 
     return (
@@ -129,11 +146,20 @@ const ProfilePassStep = () => {
                         </View>
 
                         {/* Register button */}
-                        <Button
-                            style={styles.button}
-                            title="Đăng ký"
-                            onPress={handleNext}
-                        />
+                        <View style={styles.buttonContainer}>
+                            {isRegistering ? (
+                                <View style={styles.uploadingContainer}>
+                                    <ActivityIndicator size="large" color="#FF4458" />
+                                    <Text style={styles.uploadingText}>Đang đăng ký...</Text>
+                                </View>
+                            ) : (
+                                <Button
+                                    style={styles.button}
+                                    title="Đăng ký"
+                                    onPress={handleNext}
+                                />
+                            )}
+                        </View>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -198,5 +224,22 @@ const styles = StyleSheet.create({
     },
     button: {
         marginTop: 30,
+    },
+    buttonContainer: {
+        paddingHorizontal: 28,
+        marginBottom: 20,
+        minHeight: 50,
+        justifyContent: 'center',
+    },
+    uploadingText: {
+        marginLeft: 10,
+        fontSize: 16,
+        color: '#FF4458',
+    },
+    uploadingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
     },
 });
