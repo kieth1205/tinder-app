@@ -14,26 +14,26 @@ import {
 const HouseRules = [
   {
     index: 1,
-    title: "Be yourself.",
+    title: "Hãy là chính mình.",
     description:
-      "Make sure your photos, age, and bio are \ntrue to who you are.",
+      "Đảm bảo hình ảnh, tuổi tác và tiểu sử của bạn \nphản ánh đúng con người thật.",
   },
   {
     index: 2,
-    title: "Stay safe.",
+    title: "Giữ an toàn.",
     description:
-      "Don’t be too quick to give out personal information. Date Safely",
+      "Đừng vội vàng chia sẻ thông tin cá nhân. Hẹn hò an toàn.",
   },
   {
     index: 3,
-    title: "Play it cool.",
+    title: "Hãy điềm tĩnh.",
     description:
-      "Respect others and treat them as you \nwould like to be treated.",
+      "Tôn trọng người khác và đối xử với họ như cách \nbạn muốn được đối xử.",
   },
   {
     index: 4,
-    title: "Be proactive.",
-    description: "Always report bad behavior.",
+    title: "Chủ động.",
+    description: "Luôn báo cáo hành vi không phù hợp.",
   },
 ];
 
@@ -59,10 +59,10 @@ const SuccessStep = () => {
           style={styles.image}
           resizeMode="contain"
         />
-        <Text style={styles.title} children="Welcome to Tinder." />
+        <Text style={styles.title} children="Chào mừng đến với Tinder" />
         <Text
           style={styles.subTitle}
-          children="Please follow these House Rules."
+          children="Vui lòng tuân thủ những quy tắc sau"
         />
       </View>
       <FlatList
@@ -71,7 +71,7 @@ const SuccessStep = () => {
         contentContainerStyle={styles.ruleList}
       />
       <Button
-        title="Continue"
+        title="Tiếp tục"
         onPress={() => router.push("/(tabs)")}
         gradient
       />

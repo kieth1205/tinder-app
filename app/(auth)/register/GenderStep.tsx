@@ -12,22 +12,27 @@ import { router } from "expo-router";
 import { Button } from "@/components/button/ContinueButton";
 import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
+import { useRegistration } from "@/context/RegistrationContext";
+import { GENDER } from "@/types";
+import { STEPS, TOTAL_STEPS } from "./_layout";
 
 const GenderStep = () => {
-  const [selectedGender, setSelectedGender] = useState<string | null>("male");
+  const { registrationData, updateRegistrationData } = useRegistration();
+  const [selectedGender, setSelectedGender] = useState<GENDER | null>(registrationData.gender || "MALE");
 
   const genderOptions = [
-    { id: "male", label: "Nam", icon: "male" },
-    { id: "female", label: "Nữ", icon: "female" },
+    { id: "MALE", label: "Nam", icon: "male" },
+    { id: "FEMALE", label: "Nữ", icon: "female" },
   ];
 
   const handleNext = () => {
-    router.push("/register/InterestStep");
+    updateRegistrationData('gender', selectedGender);
+    router.push("/register/DistanceStep");
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ProgressBar step={3} totalSteps={6} />
+      <ProgressBar step={STEPS.GenderStep} totalSteps={TOTAL_STEPS} />
       <AuthHeader onBack={() => router.back()} />
       <View style={styles.content}>
         <Text style={styles.title}>Bạn là</Text>
@@ -40,7 +45,7 @@ const GenderStep = () => {
                 styles.genderOption,
                 selectedGender === option.id && styles.selectedOption,
               ]}
-              onPress={() => setSelectedGender(option.id)}
+              onPress={() => setSelectedGender(option.id as GENDER)}
             >
               <Ionicons
                 name={option.icon as any}
@@ -58,12 +63,12 @@ const GenderStep = () => {
             </TouchableOpacity>
           ))}
         </View>
+        <Button
+          style={[styles.button, !selectedGender && styles.buttonDisabled]}
+          title="Tiếp tục"
+          onPress={handleNext}
+        />
       </View>
-      <Button
-        style={[styles.button, !selectedGender && styles.buttonDisabled]}
-        title="CONTINUE"
-        onPress={handleNext}
-      />
     </SafeAreaView>
   );
 };

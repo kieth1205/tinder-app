@@ -1,19 +1,24 @@
 import React from "react";
 import { View } from "../Themed";
 import { StyleSheet } from "react-native";
-import { Story } from "./Story";
+import { IStory, Story } from "./Story";
 
 interface TinderCardProps {
   character: {
     name: string;
-    img: any;
+    images: string[];
   };
 }
 
 export const TinderCard = ({ character }: TinderCardProps) => {
   return (
     <View style={styles.card}>
-      <Story name={character.name} />
+      <Story name={character.name} stories={character.images.map((image) => ({
+        id: image,
+        uri: image,
+        title: character.name,
+        type: "image",
+      })) as IStory[]} />
     </View>
   );
 };

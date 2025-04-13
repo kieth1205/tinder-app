@@ -2,54 +2,136 @@ import {
   StyleSheet,
   Text,
   View,
-  TouchableOpacity,
-  Image,
-  ScrollView,
   SafeAreaView,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
-import { Ionicons } from "@expo/vector-icons";
 import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { AuthHeader } from "@/components/AuthHeader";
 import { router } from "expo-router";
 import { Button } from "@/components/button/ContinueButton";
+import { STEPS, TOTAL_STEPS } from "./_layout";
+import { MediaUploader } from "@/components/inputs/MediaUploader";
+import { useRegistration } from "@/context/RegistrationContext";
+import api from "@/services/api";
+
+interface MediaItem {
+  uri: string;
+  type: string;
+  name: string;
+  width?: number;
+  height?: number;
+  fileSize?: number;
+}
 
 const PhotosStep = () => {
-  const [photos, setPhotos] = useState<string[]>([]);
+  const { updateRegistrationData } = useRegistration();
 
-  const handleAddPhoto = async () => {
-    // TODO: Implement photo picker logic
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  
+  const handleMediaSelected = (media: MediaItem[]) => {
+    setSelectedMedia(media);
   };
 
-  const handleNext = () => {
-    router.push("/register/SuccessStep");
+  const uploadPhotos = async () => {
+    if (selectedMedia.length === 0) {
+      Alert.alert(
+        "Không có ảnh",
+        "Vui lòng chọn ít nhất 2 ảnh để tiếp tục"
+      );
+      return;
+    }
+
+    if (selectedMedia.length < 2) {
+      Alert.alert(
+        "Cần thêm ảnh",
+        "Vui lòng chọn ít nhất 2 ảnh để tiếp tục"
+      );
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Chuẩn bị dữ liệu ảnh cho API upload
+      const mediaFiles = selectedMedia.map(item => ({
+        uri: item.uri,
+        type: item.type || 'image/jpeg',
+        name: item.name || `photo-${Date.now()}.jpg`,
+      }));
+
+      // Thực hiện tải lên qua API
+      const response = await api.upload<{ urls: string[] }>(
+        "/upload/multiple", // API endpoint
+        mediaFiles,
+        { fieldName: 'files' } // Tên field mà backend mong đợi từ FilesInterceptor
+      );
+
+      // Kiểm tra lỗi
+      if (response.error) {
+        throw new Error(`Upload failed: ${response.error}`);
+      }
+      
+      // Xử lý kết quả thành công
+      if (response.data?.urls) {
+        // Backend trả về { urls: [...] } thay vì photoUrls
+        const photoUrls = response.data.urls;
+        setUploadedPhotos(photoUrls);
+        console.log("Photos uploaded successfully:", photoUrls);
+
+        // Cập nhật dữ liệu đăng ký
+        updateRegistrationData('images', photoUrls);
+        
+        // Chuyển đến bước tiếp theo
+        router.push("/register/ProfilePassStep");
+      } else {
+        throw new Error('Không nhận được URL ảnh từ server');
+      }
+    } catch (error: any) {
+      console.error("Photo upload error:", error);
+      Alert.alert(
+        "Lỗi tải lên",
+        error.message || "Đã xảy ra lỗi khi tải ảnh lên. Vui lòng thử lại."
+      );
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ProgressBar step={5} totalSteps={6} />
+      <ProgressBar step={STEPS.PhotosStep} totalSteps={TOTAL_STEPS} />
       <AuthHeader onBack={() => router.back()} />
-      <Text style={styles.title}>Add photos</Text>
-      <Text style={styles.subtitle}>Add at least 2 photos to continue</Text>
-
-      <ScrollView contentContainerStyle={styles.photoGrid}>
-        {[...Array(6)].map((_, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.photoBox}
-            onPress={handleAddPhoto}
-          >
-            {photos[index] ? (
-              <Image source={{ uri: photos[index] }} style={styles.photo} />
-            ) : (
-              <View style={styles.addPhotoPlaceholder}>
-                <Ionicons name="add" size={40} color="#FF4458" />
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-      <Button title="CONTINUE" gradient onPress={handleNext} />
+      <Text style={styles.title}>Thêm ảnh</Text>
+      <Text style={styles.subtitle}>Thêm ít nhất 2 ảnh để tiếp tục</Text>
+      
+      <View style={styles.uploaderContainer}>
+        <MediaUploader 
+          maxFiles={6}
+          allowedTypes={['image']}
+          maxFileSize={5 * 1024 * 1024} // 5MB limit
+          onMediaSelected={handleMediaSelected}
+        />
+      </View>
+      
+      <View style={styles.buttonContainer}>
+        {uploading ? (
+          <View style={styles.uploadingContainer}>
+            <ActivityIndicator size="large" color="#FF4458" />
+            <Text style={styles.uploadingText}>Đang tải ảnh lên...</Text>
+          </View>
+        ) : (
+          <Button 
+            title="Tiếp tục" 
+            gradient 
+            onPress={uploadPhotos} 
+            disabled={selectedMedia.length < 2}
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 };
@@ -73,31 +155,25 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: "center",
   },
-  photoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 12,
+  uploaderContainer: {
+    flex: 2,
+    paddingHorizontal: 10,
+  },
+  buttonContainer: {
     paddingHorizontal: 28,
+    marginBottom: 20,
+    minHeight: 50,
+    justifyContent: 'center',
   },
-  photoBox: {
-    width: "30%",
-    aspectRatio: 0.75,
-    borderRadius: 8,
-    overflow: "hidden",
-    backgroundColor: "#f5f5f5",
+  uploadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
   },
-  photo: {
-    width: "100%",
-    height: "100%",
-  },
-  addPhotoPlaceholder: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderStyle: "dashed",
-    borderColor: "#ddd",
-    borderRadius: 8,
+  uploadingText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#FF4458',
   },
 });

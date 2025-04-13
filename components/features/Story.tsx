@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   TouchableOpacity,
   ImageBackground,
@@ -13,59 +12,21 @@ import Video from "react-native-video";
 
 const deviceWidth = Dimensions.get("window").width;
 
-interface IStory {
-  id: number;
+export interface IStory {
+  id: string;
   uri: any;
   title: string;
   type: "image" | "video";
 }
 
-const STORIES: IStory[] = [
-  {
-    id: 1,
-    uri: require("../../assets/images/om-1.jpeg"),
-    title: "Story 1",
-    type: "image",
-  },
-  {
-    id: 2,
-    uri: require("../../assets/images/om-2.png"),
-    title: "Story 1",
-    type: "image",
-  },
-  // {
-  //   id: 2,
-  //   uri: "https://www.w3schools.com/html/mov_bbb.mp4",
-  //   title: "Story 2",
-  //   type: "video",
-  // },
-  {
-    id: 3,
-    uri: require("../../assets/images/om-3.png"),
-    title: "Story 3",
-    type: "image",
-  },
-  {
-    id: 4,
-    uri: require("../../assets/images/om-4.png"),
-    title: "Story 4",
-    type: "image",
-  },
-  {
-    id: 5,
-    uri: require("../../assets/images/om-5.png"),
-    title: "Story 5",
-    type: "image",
-  },
-];
-
 interface IStoryProps {
   name: string;
+  stories: IStory[];
 }
 
-const Story = ({ name }: IStoryProps) => {
+const Story = ({ name, stories }: IStoryProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const width = (deviceWidth - 8 * STORIES.length) / STORIES.length;
+  const width = (deviceWidth - 8 * stories.length) / stories.length;
 
   const handlePrev = () => {
     if (currentIndex > 0) {
@@ -74,7 +35,7 @@ const Story = ({ name }: IStoryProps) => {
   };
 
   const handleNext = () => {
-    if (currentIndex < STORIES.length - 1) {
+    if (currentIndex < stories.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
@@ -112,7 +73,7 @@ const Story = ({ name }: IStoryProps) => {
           />
         }
       >
-        {STORIES.map((story) => (
+        {stories.map((story) => (
           <View key={story.id} style={styles.slide}>
             {story.type === "video" ? (
               <Video
@@ -123,7 +84,7 @@ const Story = ({ name }: IStoryProps) => {
                 paused={false}
               />
             ) : (
-              <ImageBackground style={styles.cardImage} source={story.uri}>
+              <ImageBackground style={styles.cardImage} source={{ uri: story.uri }}>
                 <Text style={styles.cardTitle}>{name}</Text>
               </ImageBackground>
             )}
@@ -144,7 +105,7 @@ const Story = ({ name }: IStoryProps) => {
       <TouchableOpacity
         style={styles.rightButton}
         onPress={handleNext}
-        disabled={currentIndex === STORIES.length - 1} // Vô hiệu hóa nút nếu ở story cuối cùng
+        disabled={currentIndex === stories.length - 1} // Vô hiệu hóa nút nếu ở story cuối cùng
       >
         <View style={styles.buttonArea} />
       </TouchableOpacity>

@@ -25,6 +25,10 @@ export default function LoginScreen() {
     formState: { errors, isSubmitting },
   } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "test@gmail.com",
+      password: "123123aa",
+    },
   });
 
   const onSubmit = async (data: LoginSchema) => {

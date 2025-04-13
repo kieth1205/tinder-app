@@ -3,23 +3,33 @@ import { Button } from "@/components/button/ContinueButton";
 import { TextInput } from "@/components/inputs";
 import { ProgressBar } from "@/components/progress-bar/ProgressBar";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
+import { useRegistration } from "@/context/RegistrationContext";
 import {
-  View,
   Text,
   StyleSheet,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from "react-native";
+import { STEPS, TOTAL_STEPS } from "./_layout";
 
 const NameStep = () => {
-  const [name, setName] = useState("");
+  const { registrationData, updateRegistrationData } = useRegistration();
+
+  const handleNext = () => {
+    if (!registrationData.name) {
+      Alert.alert("Lỗi", "Vui lòng nhập tên");
+      return;
+    }
+    router.push("/register/BirthStep");
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ProgressBar step={1} totalSteps={6} />
+      <ProgressBar step={STEPS.NameStep} totalSteps={TOTAL_STEPS} />
       <AuthHeader leftIcon="close" onBack={() => router.back()} />
 
       <KeyboardAvoidingView
@@ -33,11 +43,11 @@ const NameStep = () => {
           <Text style={styles.title} children="Tên của bạn là" />
           <TextInput
             style={styles.input}
-            value={name}
+            value={registrationData.name}
             outlineMode="bottom"
-            onChangeText={setName}
+            onChangeText={(value) => updateRegistrationData('name', value)}
             placeholder="Nhập tên của bạn"
-            // autoFocus
+          // autoFocus
           />
           <Text style={styles.hint}>
             Đây là cách nó sẽ xuất hiện trong Tinder và bạn sẽ không thể thay
@@ -45,9 +55,9 @@ const NameStep = () => {
           </Text>
         </ScrollView>
         <Button
-          style={[styles.button, !name && styles.buttonDisabled]}
-          onPress={() => router.push("/register/BirthStep")}
-          disabled={!name}
+          style={[styles.button, !registrationData.name && styles.buttonDisabled]}
+          onPress={handleNext}
+          disabled={!registrationData.name}
           title="Tiếp tục"
         />
       </KeyboardAvoidingView>
@@ -79,7 +89,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontSize: 16,
     marginBottom: 12,
-    color: "gray",
+    color: "#000",
   },
   hint: {
     color: "#8E8E8E",

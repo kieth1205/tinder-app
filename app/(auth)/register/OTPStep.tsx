@@ -5,14 +5,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
+import { useRegistration } from "@/context/RegistrationContext";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/button/ContinueButton";
 import OTPInput from "@/components/inputs/OTPInput";
 const OTPStep = () => {
+  const [otp, setOtp] = useState('');
+  const { registrationData } = useRegistration();
+  
   const handleNext = () => {
     router.push("/register/NameStep");
+  };
+  
+  const handleOtpChange = (value: string) => {
+    setOtp(value);
   };
   return (
     <View style={styles.container}>
@@ -30,10 +38,10 @@ const OTPStep = () => {
         <Text style={styles.description}>
           Vui lòng nhập mã đã được gửi đến số điện thoại của bạn
         </Text>
-        <OTPInput length={6} />
+        <OTPInput length={6} onCodeChanged={handleOtpChange} />
       </View>
       <View style={styles.buttonContainer}>
-        <Button title="Tiếp tục" gradient onPress={handleNext} />
+        <Button title="Tiếp tục" gradient onPress={handleNext} disabled={otp.length < 6} />
       </View>
     </View>
   );
