@@ -3,8 +3,9 @@ import { Platform } from 'react-native';
 // Define base API URL
 const API_BASE_URL = process.env.API_BASE_URL || 'https://gh9p6dht-9981.asse.devtunnels.ms';
 
-// Define token storage key
-const AUTH_TOKEN_KEY = 'auth_token';
+// Define token storage keys
+const ACCESS_TOKEN_KEY = 'access_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 
 // HTTP request methods
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -26,88 +27,121 @@ interface ApiResponse<T = any> {
 
 // Simple token storage implementation
 class TokenStorage {
-  private static token: string | null = null;
+  private static accessToken: string | null = null;
+  private static refreshToken: string | null = null;
 
   // For web platform, use localStorage
-  private static saveToLocalStorage(token: string): void {
+  private static saveToLocalStorage(key: string, token: string): void {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(AUTH_TOKEN_KEY, token);
+      localStorage.setItem(key, token);
     }
   }
 
-  private static getFromLocalStorage(): string | null {
+  private static getFromLocalStorage(key: string): string | null {
     if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem(AUTH_TOKEN_KEY);
+      return localStorage.getItem(key);
     }
     return null;
   }
 
-  private static removeFromLocalStorage(): void {
+  private static removeFromLocalStorage(key: string): void {
     if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(key);
     }
   }
 
   // Public methods that handle both native and web platforms
-  public static async saveToken(token: string): Promise<void> {
-    this.token = token;
+  public static async saveAccessToken(token: string): Promise<void> {
+    this.accessToken = token;
     
     // If web, also save to localStorage for persistence
     if (Platform.OS === 'web') {
-      this.saveToLocalStorage(token);
+      this.saveToLocalStorage(ACCESS_TOKEN_KEY, token);
     }
   }
 
-  public static async getToken(): Promise<string | null> {
+  public static async saveRefreshToken(token: string): Promise<void> {
+    this.refreshToken = token;
+    
+    // If web, also save to localStorage for persistence
+    if (Platform.OS === 'web') {
+      this.saveToLocalStorage(REFRESH_TOKEN_KEY, token);
+    }
+  }
+
+  public static async getAccessToken(): Promise<string | null> {
     // For web, try to get from localStorage if not in memory
-    if (this.token === null && Platform.OS === 'web') {
-      this.token = this.getFromLocalStorage();
+    if (this.accessToken === null && Platform.OS === 'web') {
+      this.accessToken = this.getFromLocalStorage(ACCESS_TOKEN_KEY);
     }
-    return this.token;
+    return this.accessToken;
   }
 
-  public static async removeToken(): Promise<void> {
-    this.token = null;
+  public static async getRefreshToken(): Promise<string | null> {
+    // For web, try to get from localStorage if not in memory
+    if (this.refreshToken === null && Platform.OS === 'web') {
+      this.refreshToken = this.getFromLocalStorage(REFRESH_TOKEN_KEY);
+    }
+    return this.refreshToken;
+  }
+
+  public static async removeTokens(): Promise<void> {
+    this.accessToken = null;
+    this.refreshToken = null;
     
     // If web, also remove from localStorage
     if (Platform.OS === 'web') {
-      this.removeFromLocalStorage();
+      this.removeFromLocalStorage(ACCESS_TOKEN_KEY);
+      this.removeFromLocalStorage(REFRESH_TOKEN_KEY);
     }
   }
 }
 
 /**
- * Save authentication token to storage
+ * Save authentication tokens to storage
  */
-export const saveAuthToken = async (token: string): Promise<void> => {
+export const saveAuthTokens = async (accessToken: string, refreshToken: string): Promise<void> => {
   try {
-    await TokenStorage.saveToken(token);
+    await TokenStorage.saveAccessToken(accessToken);
+    await TokenStorage.saveRefreshToken(refreshToken);
   } catch (error) {
-    console.error('Error saving auth token:', error);
+    console.error('Error saving auth tokens:', error);
     throw error;
   }
 };
 
 /**
- * Get authentication token from storage
+ * Get access token from storage
  */
 export const getAuthToken = async (): Promise<string | null> => {
   try {
-    return await TokenStorage.getToken();
+    return await TokenStorage.getAccessToken();
   } catch (error) {
-    console.error('Error retrieving auth token:', error);
+    console.error('Error retrieving access token:', error);
     return null;
   }
 };
 
 /**
- * Remove authentication token from storage
+ * Get refresh token from storage
+ */
+export const getRefreshToken = async (): Promise<string | null> => {
+  try {
+    return await TokenStorage.getRefreshToken();
+  } catch (error) {
+    console.error('Error retrieving refresh token:', error);
+    return null;
+  }
+};
+
+/**
+ * Remove authentication tokens from storage
  */
 export const removeAuthToken = async (): Promise<void> => {
   try {
-    await TokenStorage.removeToken();
+    await TokenStorage.removeTokens();
   } catch (error) {
-    console.error('Error removing auth token:', error);
+    console.error('Error removing auth tokens:', error);
     throw error;
   }
 };

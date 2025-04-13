@@ -1,53 +1,52 @@
-import { StyleSheet } from "react-native";
+import { SafeAreaView, StyleSheet, ActivityIndicator } from "react-native";
 import { Text, View } from "@/components/Themed";
-import React, { useState, useMemo } from "react";
-import { ImageBackground, TouchableOpacity } from "react-native";
+import React, { useState, useMemo, useEffect } from "react";
+import { TouchableOpacity } from "react-native";
 import TinderCard from "react-tinder-card";
 import { TinderCard as TinderCardCustom } from "@/components/features";
 import { Ionicons } from "@expo/vector-icons"; // Ensure you have @expo/vector-icons installed
+import { useGetMatches } from "@/hooks/use-get-matches";
 
 type Direction = "left" | "right" | "up";
 
-const db = [
+// Fallback data trong trường hợp API fails
+const fallbackData = [
   {
     name: "Richard Hendricks",
-    img: require("../../assets/images/icon.png"),
+    img: "https://firebasestorage.googleapis.com/v0/b/file-storage-6ac01.appspot.com/o/tinder%2Fimages%2F2025%2F04%2F13%2Fom-1.jpeg?alt=media&token=818bb487-d1a2-4f86-924f-6bf885c32a3d",
   },
   {
     name: "Erlich Bachman",
-    img: require("../../assets/images/icon.png"),
-  },
-  {
-    name: "Monica Hall",
-    img: require("../../assets/images/icon.png"),
-  },
-  {
-    name: "Jared Dunn",
-    img: require("../../assets/images/icon.png"),
-  },
-  {
-    name: "Dinesh Chugtai",
-    img: require("../../assets/images/icon.png"),
+    img: "https://firebasestorage.googleapis.com/v0/b/file-storage-6ac01.appspot.com/o/tinder%2Fimages%2F2025%2F04%2F13%2Fom-2.png?alt=media&token=753a8b7b-8bef-4081-9834-07ba21b8e46b",
   },
 ];
 
-const alreadyRemoved: any = [];
-let charactersState = db;
+const alreadyRemoved: string[] = [];
 
 export default function TabOneScreen() {
-  const [characters, setCharacters] = useState<any>(db);
+  const { data: matchesData, isLoading, error } = useGetMatches();
+  
+  const [characters, setCharacters] = useState<any[]>([]);
   const [lastDirection, setLastDirection] = useState<string>();
-  const [highlightedButton, setHighlightedButton] = useState<Direction | null>(
-    null
-  );
+  const [highlightedButton, setHighlightedButton] = useState<Direction | null>(null);
 
-  const childRefs = useMemo(
-    () =>
-      Array(db.length)
-        .fill(0)
-        .map((i) => React.createRef()),
-    []
-  );
+  // Cập nhật characters khi matchesData thay đổi
+  useEffect(() => {
+    if (matchesData && matchesData.length > 0) {
+      setCharacters(matchesData);
+    } else if (error) {
+      // Sử dụng fallbackData nếu có lỗi
+      console.error("Error fetching matches:", error);
+      setCharacters(fallbackData);
+    }
+  }, [matchesData, error]);
+
+  // Tạo refs dựa trên số lượng characters
+  const childRefs = useMemo(() => {
+    return Array(characters.length)
+      .fill(0)
+      .map(() => React.createRef());
+  }, [characters.length]);
 
   const swiped = (direction: Direction, nameToDelete: string) => {
     console.log("removing: " + nameToDelete + " to the " + direction);
@@ -58,22 +57,26 @@ export default function TabOneScreen() {
 
   const outOfFrame = (name: string) => {
     console.log(name + " left the screen!");
-    charactersState = charactersState.filter(
-      (character) => character.name !== name
-    );
-    setCharacters(charactersState);
+    setCharacters((prevChars) => prevChars.filter(character => character.name !== name));
     setHighlightedButton(null);
   };
+  
+
+  console.log("characters", characters?.length)
+  console.log("matchesData", matchesData?.length)
+
 
   const swipe = (dir: Direction) => {
     const cardsLeft = characters.filter(
-      (person: any) => !alreadyRemoved.includes(person.name)
+      (person) => !alreadyRemoved.includes(person.name)
     );
     if (cardsLeft.length) {
       const toBeRemoved = cardsLeft[cardsLeft.length - 1].name;
-      const index = db.map((person) => person.name).indexOf(toBeRemoved);
-      alreadyRemoved.push(toBeRemoved);
-      (childRefs[index].current as any).swipe(dir);
+      const index = characters.findIndex((person) => person.name === toBeRemoved);
+      if (index !== -1 && childRefs[index] && childRefs[index].current) {
+        alreadyRemoved.push(toBeRemoved);
+        (childRefs[index].current as any).swipe(dir);
+      }
     }
   };
 
@@ -81,13 +84,33 @@ export default function TabOneScreen() {
     setHighlightedButton(dir); // Highlight button while swiping
   };
 
+  // Hiển thị loading khi đang fetch dữ liệu
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#3498DB" />
+        <Text style={styles.loadingText}>Đang tải matches...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // // Hiển thị thông báo khi không có matches
+  // if (characters.length === 0) {
+  //   return (
+  //     <SafeAreaView style={[styles.container, styles.emptyContainer]}>
+  //       <Ionicons name="heart-dislike" size={50} color="#ccc" />
+  //       <Text style={styles.emptyText}>Không tìm thấy matches nào</Text>
+  //     </SafeAreaView>
+  //   );
+  // }
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.cardContainer}>
-        {characters.map((character: any, index: number) => (
+        {characters.map((character, index) => (
           <TinderCard
             ref={childRefs[index] as any}
-            key={character.name}
+            key={character.id}
             onSwipe={(dir) => swiped(dir as Direction, character.name)}
             onCardLeftScreen={() => outOfFrame(character.name)}
             onSwipeRequirementFulfilled={(dir) => {
@@ -138,7 +161,7 @@ export default function TabOneScreen() {
           <Ionicons name="heart" size={36} color="white" />
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -148,6 +171,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    marginTop: 20,
+    fontSize: 18,
+    color: "#888",
   },
   header: {
     color: "#000",
