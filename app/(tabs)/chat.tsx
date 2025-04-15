@@ -9,14 +9,11 @@ import {
 export const DARK_GRAY = "#363636";
 
 import { Text, View } from "@/components/Themed";
+import { Redirect } from 'expo-router';
 
 export default function TabTwoScreen() {
   return (
-    <View style={styles.containerMessages}>
-      <View style={styles.top}>
-        <Text style={styles.title}>Messages</Text>
-      </View>
-    </View>
+    <Redirect href="/chat" />
   );
 }
 

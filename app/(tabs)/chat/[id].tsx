@@ -1,10 +1,9 @@
-import { StatusBar } from 'expo-status-bar';
-import { Platform, StyleSheet, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { GiftedChat, IMessage } from 'react-native-gifted-chat';
-import { useState, useCallback, useEffect } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 
-export default function ModalScreen() {
+export default function ChatDetail() {
   const { id } = useLocalSearchParams();
   const [messages, setMessages] = useState<IMessage[]>([]);
 
@@ -45,7 +44,6 @@ export default function ModalScreen() {
         alwaysShowSend={true}
         inverted={true}
       />
-      <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </View>
   );
 }
