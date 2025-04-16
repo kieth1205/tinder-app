@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, FlatList, TouchableOpacity, Image, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface ChatItem {
   id: string;
@@ -33,10 +34,10 @@ export default function ChatList() {
   const router = useRouter();
 
   const renderChatItem = ({ item }: { item: ChatItem }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.chatItem}
       onPress={() => router.push({
-        pathname: '/modal',
+        pathname: '/(tabs)/chat/[id]',
         params: {
           id: item.id,
           name: item.name,
@@ -58,15 +59,15 @@ export default function ChatList() {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Messages</Text>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.header}>Tin nhắn</Text>
       <FlatList
         data={chatList}
         renderItem={renderChatItem}
         keyExtractor={(item) => item.id}
         style={styles.list}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

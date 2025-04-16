@@ -31,31 +31,24 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <TabBarIcon name="fire" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? "light"].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
+          tabBarIcon: ({ color }) => <TabBarIcon name="fire" color={color} activeIcon={null} inactiveIcon={null} />,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="chat/index"
+        options={{
+          title: "Chat",
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="comment" color={color} activeIcon={null} inactiveIcon={null} />
           ),
           headerShown: false,
         }}
       />
       <Tabs.Screen
-        name="chat"
+        name="chat/[id]"
         options={{
-          title: "Chat",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="comment" color={color} />
-          ),
+          href: null,
           headerShown: false,
         }}
       />
@@ -63,7 +56,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} activeIcon={null} inactiveIcon={null} />,
           headerShown: false,
         }}
       />
