@@ -61,11 +61,6 @@ export default function TabOneScreen() {
     setHighlightedButton(null);
   };
   
-
-  console.log("characters", characters?.length)
-  console.log("matchesData", matchesData?.length)
-
-
   const swipe = (dir: Direction) => {
     const cardsLeft = characters.filter(
       (person) => !alreadyRemoved.includes(person.name)
