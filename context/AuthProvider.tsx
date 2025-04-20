@@ -27,7 +27,7 @@ function useProtectedRoute(user: User | null, loading: boolean, checkAuth: () =>
   useEffect(() => {
     const verifyAuth = async () => {
       const isAuth = await checkAuth();
-      
+
       // Sau khi hoàn thành kiểm tra xác thực, điều hướng đến màn hình phù hợp
       if (isAuth) {
         // Đã đăng nhập -> chuyển đến màn home
@@ -42,14 +42,14 @@ function useProtectedRoute(user: User | null, loading: boolean, checkAuth: () =>
         }
       }
     };
-    
+
     verifyAuth();
   }, []);
 
   // Theo dõi thay đổi trạng thái người dùng và điều hướng
   useEffect(() => {
     const inAuthGroup = segments[0] === "(tabs)";
-    
+
     // Nếu đang tải, không điều hướng
     if (loading) return;
 
@@ -57,7 +57,7 @@ function useProtectedRoute(user: User | null, loading: boolean, checkAuth: () =>
     if (!user && inAuthGroup) {
       console.log("Not logged in, redirecting to login")
       router.replace("/(auth)");
-    } 
+    }
     // Nếu đã đăng nhập và không ở nhóm tabs (trừ trường hợp chưa điều hướng)
     else if (user && !inAuthGroup && segments[0] !== undefined) {
       console.log("user && !inAuthGroup && segments[0] !== undefined")
@@ -90,17 +90,31 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const response = await api.post('/auth/login', { email, password }, { requireAuth: false });
-      
+      // const response = await api.post('/auth/login', { email, password }, { requireAuth: false });
+
+      const response = {
+        data: {
+          accessToken: "1",
+          refreshToken: "2",
+          user: {
+            id: "1",
+            email: "test@gmail.com",
+            name: "test",
+            avatar: "https://images.unsplash.com/photo-1506794778202-254834971119?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+            bio: "Funny"
+          }
+        }
+      }
+
       if (response.data && response.data.accessToken && response.data.refreshToken && response.data.user) {
         // Lưu tokens
         await saveAuthTokens(response.data.accessToken, response.data.refreshToken);
-        
+
         // Lưu thông tin người dùng trực tiếp từ response
         setUser(response.data.user);
         return true;
       } else {
-        Alert.alert("Lỗi đăng nhập", response.data?.message || "Tài khoản hoặc mật khẩu không đúng");
+        Alert.alert("Lỗi đăng nhập", "Tài khoản hoặc mật khẩu không đúng");
         return false;
       }
     } catch (error: any) {
@@ -119,20 +133,20 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       console.log("check auth")
 
       setLoading(true);
-      
+
       // Kiểm tra token
       const isAuth = await isAuthenticated();
-      
+
       console.log("isAuth", isAuth)
 
       if (!isAuth) {
         setUser(null);
         return false;
       }
-      
+
       // Gọi API kiểm tra thông tin người dùng
       const response = await api.get('/auth/me');
-      
+
       if (response.data && response.data.user) {
         setUser(response.data.user);
         return true;
