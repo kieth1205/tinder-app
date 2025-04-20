@@ -1,24 +1,44 @@
 import React from "react";
 import { View } from "../Themed";
-import { StyleSheet } from "react-native";
+import { StyleSheet, TouchableOpacity } from "react-native";
 import { IStory, Story } from "./Story";
+import { UserSuggestion } from "@/types";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 interface TinderCardProps {
-  character: {
-    name: string;
-    images: string[];
-  };
+  character: UserSuggestion;
 }
 
 export const TinderCard = ({ character }: TinderCardProps) => {
+  const router = useRouter();
+
+  const handleInfoPress = () => {
+    // Chuyển hướng tới màn hình chi tiết người dùng với ID
+    router.push({
+      pathname: "/user-detail/[id]",
+      params: { id: character.id }
+    });
+  };
+
   return (
     <View style={styles.card}>
-      <Story name={character.name} stories={character.images.map((image) => ({
-        id: image,
-        uri: image,
-        title: character.name,
-        type: "image",
-      })) as IStory[]} />
+      <Story 
+        user={character} 
+        name={character.name} 
+        stories={character.images.map((image) => ({
+          id: image,
+          uri: image,
+          title: character.name,
+          type: "image",
+        })) as IStory[]} 
+      />
+      <TouchableOpacity 
+        style={styles.infoButton} 
+        onPress={handleInfoPress}
+      >
+        <Ionicons name="arrow-up-circle" size={40} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -46,5 +66,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     margin: 10,
     color: "#fff",
+  },
+  infoButton: {
+    position: "absolute",
+    right: 15,
+    bottom: 15,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    borderRadius: 30,
+    padding: 5,
+    zIndex: 100,
   },
 });
