@@ -86,25 +86,23 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Đăng nhập với API
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      // const response = await api.post('/auth/login', { email, password }, { requireAuth: false });
-
-      const response = {
-        data: {
-          accessToken: "1",
-          refreshToken: "2",
-          user: {
-            id: "1",
-            email: "test@gmail.com",
-            name: "test",
-            avatar: "https://images.unsplash.com/photo-1506794778202-254834971119?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-            bio: "Funny"
-          }
-        }
-      }
+      const response = await api.post('/auth/login', { email, password }, { requireAuth: false });
+      // const response = {
+      //   data: {
+      //     accessToken: "1",
+      //     refreshToken: "2",
+      //     user: {
+      //       id: "1",
+      //       email: "test@gmail.com",
+      //       name: "test",
+      //       avatar: "https://images.unsplash.com/photo-1506794778202-254834971119?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+      //       bio: "Funny"
+      //     }
+      //   }
+      // }
 
       if (response.data && response.data.accessToken && response.data.refreshToken && response.data.user) {
         // Lưu tokens

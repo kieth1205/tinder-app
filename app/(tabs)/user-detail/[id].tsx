@@ -1,16 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useContext } from 'react';
+import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert, Modal, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
 import { ALCOHOL_CONSUMPTION, COMMUNICATION_STYLE, DIETARY_PREFERENCE, EDUCATION, EXERCISE_FREQUENCY, GENDER, INTEREST, LOOKING_FOR, LOVE_LANGUAGE, MappingAlcoholConsumption, MappingCommunicationStyle, MappingDietaryPreference, MappingEducation, MappingExercise, MappingGender, MappingInterest, MappingLookingFor, MappingLoveLanguage, MappingPets, MappingSleepPattern, MappingSmokingPreference, MappingSocialMediaUsage, MappingZodiacSign, PETS, SLEEP_PATTERN, SMOKING_PREFERENCE, SOCIAL_MEDIA_USAGE, UserSuggestion, ZODIAC_SIGN } from '@/types';
 import { useGetMatches } from '@/hooks/use-get-matches';
+import messageService from '@/services/messageService';
+import { AuthContext } from '@/context/AuthProvider';
 
 export default function UserDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: users, isLoading } = useGetMatches();
   const [user, setUser] = useState<UserSuggestion | null>(null);
+  const { user: currentUser } = useContext(AuthContext);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [message, setMessage] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
   
   useEffect(() => {
     if (users && id) {
@@ -41,11 +47,93 @@ export default function UserDetailScreen() {
       </SafeAreaView>
     );
   }
-
-  console.log("user", user.images);
+  
+  const startConversation = async () => {
+    if (!message.trim()) {
+      Alert.alert('Thông báo', 'Vui lòng nhập nội dung tin nhắn');
+      return;
+    }
+    
+    if (!currentUser?.id) {
+      Alert.alert('Thông báo', 'Bạn cần đăng nhập để gửi tin nhắn');
+      return;
+    }
+    
+    try {
+      setSendingMessage(true);
+      
+      const result = await messageService.startConversation(
+        user.id,
+        message.trim()
+      );
+      
+      if (result) {
+        setModalVisible(false);
+        setMessage('');
+        
+        // Chuyển đến màn hình chat với người dùng này
+        router.push({
+          pathname: '/(tabs)/chat/[id]',
+          params: {
+            id: user.id,
+            userId: currentUser.id,
+            name: user.name,
+            avatar: user.images[0]
+          }
+        });
+      } else {
+        Alert.alert('Lỗi', 'Không thể gửi tin nhắn. Vui lòng thử lại sau.');
+      }
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      Alert.alert('Lỗi', 'Không thể gửi tin nhắn. Vui lòng thử lại sau.');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Modal gửi tin nhắn đầu tiên */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Gửi tin nhắn cho {user.name}</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <AntDesign name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Nhập tin nhắn..."
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              maxLength={500}
+            />
+            
+            <TouchableOpacity 
+              style={styles.sendButton} 
+              onPress={startConversation}
+              disabled={sendingMessage}
+            >
+              {sendingMessage ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.sendButtonText}>Gửi tin nhắn</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      
       <ScrollView style={styles.scrollView}>
         {/* Header với nút back */}
         <View style={styles.header}>
@@ -236,6 +324,17 @@ export default function UserDetailScreen() {
           </View>
         </View>
       </ScrollView>
+      
+      {/* Nút bắt đầu trò chuyện */}
+      <View style={styles.chatButtonContainer}>
+        <TouchableOpacity 
+          style={styles.chatButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
+          <Text style={styles.chatButtonText}>Bắt đầu trò chuyện</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -381,6 +480,79 @@ const styles = StyleSheet.create({
     width: '31%',
     aspectRatio: 1,
     borderRadius: 8,
+  },
+  chatButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  chatButton: {
+    backgroundColor: '#FF4458',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  chatButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '90%',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  messageInput: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    marginBottom: 20,
+  },
+  sendButton: {
+    backgroundColor: '#FF4458',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  sendButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   footer: {
     flexDirection: 'row',

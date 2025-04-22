@@ -1,7 +1,9 @@
 import { Platform } from 'react-native';
 
 // Define base API URL
-const API_BASE_URL = process.env.API_BASE_URL || 'https://gh9p6dht-9981.asse.devtunnels.ms';
+const API_BASE_URL = process.env.API_BASE_URL || 'https://lldttsmt-9981.asse.devtunnels.ms';
+
+console.log("API_BASE_URL", API_BASE_URL)
 
 // Define token storage keys
 const ACCESS_TOKEN_KEY = 'access_token';

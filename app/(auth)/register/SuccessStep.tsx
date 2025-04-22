@@ -72,7 +72,7 @@ const SuccessStep = () => {
       />
       <Button
         title="Tiếp tục"
-        onPress={() => router.push("/(tabs)")}
+        onPress={() => router.push("/(auth)/login")}
         gradient
       />
     </SafeAreaView>
