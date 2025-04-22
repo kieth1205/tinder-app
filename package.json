@@ -24,6 +24,7 @@
     "date-fns": "^4.1.0",
     "expo": "~52.0.26",
     "expo-av": "^15.0.2",
+    "expo-file-system": "^18.0.12",
     "expo-font": "~13.0.3",
     "expo-image-picker": "~16.0.6",
     "expo-linear-gradient": "^14.0.2",
