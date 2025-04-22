@@ -47,13 +47,13 @@
         return;
       }
     
-      // if (selectedMedia.length < 2) {
-      //   Alert.alert(
-      //     "Cần thêm ảnh",
-      //     "Vui lòng chọn ít nhất 2 ảnh để tiếp tục"
-      //   );
-      //   return;
-      // }
+      if (selectedMedia.length < 2) {
+        Alert.alert(
+          "Cần thêm ảnh",
+          "Vui lòng chọn ít nhất 2 ảnh để tiếp tục"
+        );
+        return;
+      }
     
       setUploading(true);
     
@@ -75,62 +75,39 @@
             // Xử lý cho iOS nếu cần
             uri = item.uri.replace('file://', '');
           }
-          
-          console.log(`Processing file ${index}: uri=${uri}, type=${type}, name=${name}`);
-          
+                  
           return {
             uri,
             type,
             name,
           };
         }));
-    
-        console.log('Uploading media files:', JSON.stringify(mediaFiles));
         
-        const uploadResult = await FileSystem.uploadAsync(
-          API_BASE_URL + '/upload/single',
-          mediaFiles[0].uri,
-          {
-            httpMethod: 'POST',
-            uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-            fieldName: 'file',
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            }
-          }
-        )
-
-        console.log("uploadResult", uploadResult)
-
-        // Thực hiện tải lên với timeout và xử lý lỗi tốt hơn
-        const response = await Promise.race([
-          api.upload<{ urls: string[] }>(
-            "/upload/multiple",
-            mediaFiles,  // Hoặc formData nếu API của bạn hỗ trợ
-            { 
-              fieldName: 'files',
+        
+        const uploadResults = await Promise.all(mediaFiles.map(async (file) => {
+          const uploadResult = await FileSystem.uploadAsync(
+            API_BASE_URL + '/upload/single',
+            file.uri,
+            {
+              httpMethod: 'POST',
+              uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+              fieldName: 'file',
               headers: {
                 'Content-Type': 'multipart/form-data',
-              },
-              // Thêm các options để xử lý network tốt hơn
-              timeout: 60000, // 60 giây
+              }
             }
-          ),
-          new Promise<any>((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout: Upload took too long')), 60000)
-          )
-        ]);
+          );
+
+          const body = JSON.parse(uploadResult.body)
+
+          return body?.url as string;
+        }));
+      
+        console.log("uploadResults", uploadResults)
     
-        console.log('Upload response:', JSON.stringify(response));
-    
-        // Kiểm tra lỗi
-        if (response.error) {
-          throw new Error(`Upload failed: ${response.error}`);
-        }
-        
         // Xử lý kết quả thành công
-        if (response.data?.urls && response.data.urls.length > 0) {
-          const photoUrls = response.data.urls;
+        if (uploadResults && uploadResults.length > 0) {
+          const photoUrls = uploadResults;
           setUploadedPhotos(photoUrls);
           console.log("Photos uploaded successfully:", photoUrls);
     

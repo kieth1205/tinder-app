@@ -80,10 +80,10 @@ export type COMMUNICATION_STYLE =
     | "THICH_GAP_MAT_TRUC_TIEP";
 
 export const MappingCommunicationStyle: Record<COMMUNICATION_STYLE, string> = {
-    NGHIEN_NHAN_TIN: "Nghiên nhận tin",
+    NGHIEN_NHAN_TIN: "Nghiện nhắn tin",
     THICH_GOI_DIEN: "Thích gọi điện",
     THICH_GOI_VIDEO: "Thích gọi video",
-    IT_NHAN_TIN: "It nhận tin",
+    IT_NHAN_TIN: "Ít nhắn tin",
     THICH_GAP_MAT_TRUC_TIEP: "Thích gặp mặt trực tiếp"
 }
 

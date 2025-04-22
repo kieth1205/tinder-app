@@ -161,10 +161,10 @@ export default function UserDetailScreen() {
                 <Text style={styles.infoText}>{MappingGender[user.gender as GENDER]}</Text>
               </View>
             )}
-            <View style={styles.infoRow}>
+            {/* <View style={styles.infoRow}>
               <Ionicons name="flame" size={18} color="#FF4458" />
               <Text style={styles.infoText}>Điểm tương hợp: {user.similarityScore}%</Text>
-            </View>
+            </View> */}
           </View>
         </View>
 
@@ -477,9 +477,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   galleryImage: {
-    width: '31%',
-    aspectRatio: 1,
     borderRadius: 8,
+    width: 100,
+    height: 100,
   },
   chatButtonContainer: {
     position: 'absolute',
