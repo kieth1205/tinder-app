@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 // Define base API URL
-const API_BASE_URL = process.env.API_BASE_URL || 'https://lldttsmt-9981.asse.devtunnels.ms';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://lldttsmt-9981.asse.devtunnels.ms';
 
 console.log("API_BASE_URL", API_BASE_URL)
 

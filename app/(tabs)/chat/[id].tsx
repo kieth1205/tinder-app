@@ -162,7 +162,7 @@ export default function ChatDetail() {
           _id: currentUserId,
         }}
         placeholder="Nhập tin nhắn..."
-        renderActions={renderActions}
+        // renderActions={renderActions}
         renderSend={renderSend}
         renderBubble={renderBubble}
         locale="vi"

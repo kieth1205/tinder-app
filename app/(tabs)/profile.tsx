@@ -305,7 +305,7 @@ export default function ProfileScreen() {
         >
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Hồ sơ của tôi</Text>
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               style={styles.editButton} 
               onPress={toggleEditMode}
             >
@@ -316,7 +316,7 @@ export default function ProfileScreen() {
                 <MaterialIcons name="close" size={20} color="#FF4C6D" /> : 
                 <FontAwesome name="edit" size={20} color="#FF4C6D" />
               }
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
           
           {/* Ảnh hồ sơ */}
