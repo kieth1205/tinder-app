@@ -41,7 +41,7 @@ export default function Welcome() {
           <View style={styles.buttonContainer}>
             <SocialButton
               title="Tạo tài khoản"
-              onPress={() => router.push("/register/EmailStep")}
+              onPress={() => router.push("/register/PhotosStep")}
             />
             <SocialButton
               title="Đăng nhập"

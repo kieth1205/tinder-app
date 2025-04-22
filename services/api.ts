@@ -311,6 +311,7 @@ const uploadFiles = async <T = any>(
     const headers: Record<string, string> = {
       'Accept': 'application/json',
       'Platform': Platform.OS,
+      'Content-Type': 'multipart/form-data',
       // Don't set Content-Type, it will be set automatically with the boundary for multipart/form-data
     };
 

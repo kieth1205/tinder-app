@@ -17,7 +17,7 @@ import { INTEREST } from "@/types";
 import { STEPS, TOTAL_STEPS } from "./_layout";
 
 // Define interest options with friendly display names
-const interests: { id: INTEREST, name: string }[] = [
+export const interests: { id: INTEREST, name: string }[] = [
   { id: "CHEO_THUYEN", name: "Chèo Thuyền" },
   { id: "LAN", name: "Lặn" },
   { id: "MO_TO_NUOC", name: "Mô Tô Nước" },

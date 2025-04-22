@@ -70,11 +70,13 @@ const SuccessStep = () => {
         renderItem={({ item }) => <RenderRuleItem item={item} />}
         contentContainerStyle={styles.ruleList}
       />
-      <Button
-        title="Tiếp tục"
-        onPress={() => router.push("/(auth)/login")}
-        gradient
-      />
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Tiếp tục"
+          onPress={() => router.push("/(auth)/login")}
+          gradient
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -132,6 +134,11 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontWeight: "600",
     color: "#757575",
+  },
+  buttonContainer: {
+    flex: 1,
+    marginBottom: 40,
+    paddingHorizontal: 47,
   },
 });
 

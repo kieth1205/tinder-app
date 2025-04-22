@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import React, { useState } from "react";
 import { ProgressBar } from "@/components/progress-bar/ProgressBar";
@@ -56,19 +57,33 @@ const PhotosStep = () => {
     setUploading(true);
 
     try {
-      // Chuẩn bị dữ liệu ảnh cho API upload
-      const mediaFiles = selectedMedia.map(item => ({
-        uri: item.uri,
-        type: item.type || 'image/jpeg',
-        name: item.name || `photo-${Date.now()}.jpg`,
-      }));
+      // Chuẩn bị dữ liệu ảnh cho API upload, đảm bảo URI phù hợp với React Native
+      const mediaFiles = selectedMedia.map(item => {
+        // Đảm bảo URI định dạng đúng (có thể cần điều chỉnh trên iOS)
+        const uri = Platform.OS === 'android' 
+          ? item.uri 
+          : item.uri.replace('file://', '');
+          
+        return {
+          uri: uri,
+          type: item.type || 'image/jpeg',
+          name: item.name || `photo-${Date.now()}.jpg`,
+        };
+      });
 
-      // Thực hiện tải lên qua API
-      const response = await api.upload<{ urls: string[] }>(
-        "/upload/multiple", // API endpoint
-        mediaFiles,
-        { fieldName: 'files' } // Tên field mà backend mong đợi từ FilesInterceptor
-      );
+      console.log('Uploading media files:', JSON.stringify(mediaFiles));
+
+      // Thực hiện tải lên qua API với timeout dài hơn
+      const response = await Promise.race([
+        api.upload<{ urls: string[] }>(
+          "/upload/multiple", // API endpoint
+          mediaFiles,
+          { fieldName: 'files' } // Tên field mà backend mong đợi từ FilesInterceptor
+        ),
+        new Promise<any>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Upload took too long')), 60000)
+        )
+      ]);
 
       // Kiểm tra lỗi
       if (response.error) {
@@ -92,10 +107,17 @@ const PhotosStep = () => {
       }
     } catch (error: any) {
       console.error("Photo upload error:", error);
-      Alert.alert(
-        "Lỗi tải lên",
-        error.message || "Đã xảy ra lỗi khi tải ảnh lên. Vui lòng thử lại."
-      );
+      
+      // Hiển thị thông báo lỗi cụ thể hơn
+      let errorMessage = "Đã xảy ra lỗi khi tải ảnh lên. Vui lòng thử lại.";
+      
+      if (error.message.includes('network-request-failed')) {
+        errorMessage = "Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet và thử lại.";
+      } else if (error.message.includes('timeout')) {
+        errorMessage = "Quá thời gian tải lên. Có thể do kết nối mạng chậm hoặc file quá lớn.";
+      }
+      
+      Alert.alert("Lỗi tải lên", errorMessage);
     } finally {
       setUploading(false);
     }
