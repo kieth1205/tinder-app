@@ -41,6 +41,14 @@ const StyleStep = () => {
         registrationData.sleepHabit || null
     );
 
+    const selectedAll = selectedAlcohol &&
+    selectedSmoking &&
+    selectedExercise &&
+    selectedPet &&
+    selectedDietaryPreference &&
+    selectedSocialMedia &&
+    selectedSleepPattern;
+
     // Alcohol consumption options
     const alcoholOptions: { id: ALCOHOL_CONSUMPTION, label: string }[] = [
         { id: "KHONG_DANH_CHO_MINH", label: "Không dành cho mình" },
@@ -390,6 +398,7 @@ const StyleStep = () => {
                         style={styles.button}
                         title="Tiếp tục"
                         onPress={handleNext}
+                        disabled={!selectedAll}
                     />
                 </View>
             </ScrollView>

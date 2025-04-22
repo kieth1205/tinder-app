@@ -113,6 +113,11 @@ const AboutYouStep = () => {
         router.push("/register/InterestStep");
     };
 
+    const selectedAll = selectedCommunicationStyle &&
+    selectedLoveLanguage &&
+    selectedEducation &&
+    selectedZodiacSign;
+
     return (
         <SafeAreaView style={styles.container}>
             <ProgressBar step={STEPS.AboutYouStep} totalSteps={TOTAL_STEPS} />
@@ -237,6 +242,7 @@ const AboutYouStep = () => {
                         style={styles.button}
                         title="Tiếp tục"
                         onPress={handleNext}
+                        disabled={!selectedAll}
                     />
                 </View>
             </ScrollView>

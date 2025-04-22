@@ -327,6 +327,7 @@ const InterestStep = () => {
                 Alert.alert('Chọn sở thích', 'Hãy chọn ít nhất một sở thích');
               }
             }}
+            disabled={!selectedInterests.length}
             title="Tiếp tục"
           />
         </View>
