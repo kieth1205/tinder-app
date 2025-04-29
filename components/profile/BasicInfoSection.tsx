@@ -4,6 +4,8 @@ import { User } from '@/services/userService';
 // import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { GENDER } from '@/types';
 
 interface BasicInfoSectionProps {
   user: User;
@@ -81,20 +83,26 @@ export default function BasicInfoSection({
       <View style={styles.fieldContainer}>
         <Text style={styles.fieldLabel}>Giới tính</Text>
         {editMode ? (
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={gender}
-              onValueChange={(itemValue) => setGender(itemValue)}
-              style={styles.picker}
-            >
-              {genderOptions.map((option) => (
-                <Picker.Item
-                  key={option.value}
-                  label={option.label}
-                  value={option.value}
-                />
-              ))}
-            </Picker>
+          <View style={styles.optionsContainer}>
+            {genderOptions.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.genderOption,
+                  gender === option.value && styles.selectedOption,
+                ]}
+                onPress={() => setGender(option.value as GENDER)}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    gender === option.value && styles.selectedText,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         ) : (
           <Text style={styles.fieldValue}>
@@ -154,5 +162,30 @@ const styles = StyleSheet.create({
   picker: {
     height: 50,
     width: '100%',
+  },
+  optionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 10,
+  },
+  genderOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  selectedOption: {
+    backgroundColor: '#FF4C6D',
+    borderColor: '#FF4C6D',
+  },
+  optionText: {
+    color: '#666',
+  },
+  selectedText: {
+    color: "#fff",
   },
 });

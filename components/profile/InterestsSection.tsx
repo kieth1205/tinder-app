@@ -31,8 +31,7 @@ export default function InterestsSection({
       <Text style={styles.sectionTitle}>Sở thích</Text>
       
       {editMode ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.interestsEditContainer}>
+        <View style={styles.interestsEditContainer}>
             {interestOptions.map((interest) => (
               <TouchableOpacity
                 key={interest.id}
@@ -52,8 +51,7 @@ export default function InterestsSection({
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>
-        </ScrollView>
+        </View>
       ) : (
         <View style={styles.interestTagsContainer}>
           {user?.interests && user.interests.length > 0 ? (
@@ -85,6 +83,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
   },
   interestsEditContainer: {
     flexDirection: 'row',

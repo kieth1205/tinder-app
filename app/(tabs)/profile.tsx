@@ -81,7 +81,6 @@ export default function ProfileScreen() {
       setLoading(true);
       const profileData = await userService.getProfile();
       setUser(profileData);
-      
       // Initialize basic info fields
       setName(profileData.name || '');
       setBirthday(profileData.birthday ? new Date(profileData.birthday) : undefined);
@@ -249,6 +248,8 @@ export default function ProfileScreen() {
     if (editMode) {
       // Hủy chỉnh sửa và khôi phục giá trị ban đầu
       if (user) {
+        console.log("user.birthday", user.birthday)
+
         setName(user.name || '');
         setBirthday(user.birthday ? new Date(user.birthday) : undefined);
         setGender(user.gender || '');
@@ -305,7 +306,7 @@ export default function ProfileScreen() {
         >
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Hồ sơ của tôi</Text>
-            {/* <TouchableOpacity 
+            <TouchableOpacity 
               style={styles.editButton} 
               onPress={toggleEditMode}
             >
@@ -316,7 +317,7 @@ export default function ProfileScreen() {
                 <MaterialIcons name="close" size={20} color="#FF4C6D" /> : 
                 <FontAwesome name="edit" size={20} color="#FF4C6D" />
               }
-            </TouchableOpacity> */}
+            </TouchableOpacity>
           </View>
           
           {/* Ảnh hồ sơ */}

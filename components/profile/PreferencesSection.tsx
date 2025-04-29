@@ -25,7 +25,6 @@ export default function PreferencesSection({
   const lookingForOptions = [
     { value: 'NAM', label: 'Nam' },
     { value: 'NU', label: 'Nữ' },
-    { value: 'CA_HAI', label: 'Cả hai' }
   ];
 
   return (
@@ -61,19 +60,22 @@ export default function PreferencesSection({
         <Text style={styles.fieldLabel}>Khoảng cách tối đa</Text>
         <View>
           {editMode ? (
-            <View>
-              <Slider
-                style={styles.slider}
-                minimumValue={1}
-                maximumValue={100}
-                step={1}
-                value={preferredDistance}
-                onValueChange={setDistance}
-                minimumTrackTintColor="#FF4C6D"
-                maximumTrackTintColor="#D3D3D3"
-                thumbTintColor="#FF4C6D"
-              />
-              <Text style={styles.distanceValue}>{Math.round(preferredDistance)} km</Text>
+            <View style={styles.distanceContainer}>
+              <View style={styles.sliderContainer}>
+                <Slider
+                  style={styles.slider}
+                  minimumValue={1}
+                  maximumValue={100}
+                  value={preferredDistance}
+                  onValueChange={setDistance}
+                  minimumTrackTintColor="#FF4458"
+                  maximumTrackTintColor="#e0e0e0"
+                  thumbTintColor="#FF4458"
+                />
+                <View style={styles.valueContainer}>
+                  <Text style={styles.currentValue}>{preferredDistance} km</Text>
+                </View>
+              </View>
             </View>
           ) : (
             <Text style={styles.fieldValue}>
@@ -126,5 +128,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     marginTop: 4,
-  }
+  },
+
+  distanceContainer: {
+    marginBottom: 30,
+  },
+  sliderContainer: {
+    marginVertical: 20,
+  },
+  valueContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 5,
+    marginTop: 5,
+  },
+  minValue: {
+    fontSize: 12,
+    color: "#666",
+  },
+  currentValue: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FF4458",
+  },
 });

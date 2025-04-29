@@ -26,7 +26,7 @@ export default function LoginScreen() {
   } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "pqbao1212@gmail.com",
+      username: "pq1212@gmail.com",
       password: "123123aa",
     },
   });
