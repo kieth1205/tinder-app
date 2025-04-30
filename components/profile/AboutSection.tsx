@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { User } from '@/services/userService';
-import { Picker } from '@react-native-picker/picker';
+import { Picker } from '../inputs';
 import { COMMUNICATION_STYLE, EDUCATION, LOVE_LANGUAGE, MappingCommunicationStyle, MappingEducation, MappingLoveLanguage, MappingZodiacSign, ZODIAC_SIGN } from '@/types';
 
 interface AboutSectionProps {
@@ -29,74 +29,51 @@ export default function AboutSection({
   communicationStyle,
   setCommunicationStyle
 }: AboutSectionProps) {
-  // Zodiac options
-  const zodiacOptions = [
-    { value: 'BAO_BINH', label: 'Bảo Bình' },
-    { value: 'SONG_NGU', label: 'Song Ngư' },
-    { value: 'BACH_DUONG', label: 'Bạch Dương' },
-    { value: 'KIM_NGUU', label: 'Kim Ngưu' },
-    { value: 'SONG_TU', label: 'Song Tử' },
-    { value: 'CU_GIAI', label: 'Cự Giải' },
-    { value: 'SU_TU', label: 'Sư Tử' },
-    { value: 'XU_NU', label: 'Xử Nữ' },
-    { value: 'THIEN_BINH', label: 'Thiên Bình' },
-    { value: 'BO_CAP', label: 'Bọ Cạp' },
-    { value: 'NHAN_MA', label: 'Nhân Mã' },
-    { value: 'MA_KET', label: 'Ma Kết' }
-  ];
 
-  // Education options
-  const educationOptions = [
-    { value: 'TRUNG_HOC', label: 'Trung học' },
-    { value: 'CAO_DANG', label: 'Cao đẳng' },
-    { value: 'DAI_HOC', label: 'Đại học' },
-    { value: 'SAU_DAI_HOC', label: 'Sau đại học' }
-  ];
-
-  // Love languages
-  const loveLanguageOptions = [
-    { value: 'WORDS_OF_AFFIRMATION', label: 'Lời nói trân trọng' },
-    { value: 'QUALITY_TIME', label: 'Thời gian chất lượng' },
-    { value: 'RECEIVING_GIFTS', label: 'Nhận quà tặng' },
-    { value: 'ACTS_OF_SERVICE', label: 'Sự giúp đỡ' },
-    { value: 'PHYSICAL_TOUCH', label: 'Tiếp xúc thân thể' }
-  ];
-
-  // Communication styles
-  const communicationStyleOptions = [
-    { value: 'BIG_LAUGHS', label: 'Thích cười lớn' },
-    { value: 'PHONE_CALLS', label: 'Thích gọi điện' },
-    { value: 'VIDEO_CHAT', label: 'Chat video' },
-    { value: 'TEXT_FIRST', label: 'Nhắn tin trước' }
-  ];
-
-  const getOptionLabel = (value: string | undefined, options: {value: string, label: string}[]) => {
-    if (!value) return 'Chưa cập nhật';
-    const option = options.find(o => o.value === value);
-    return option ? option.label : value;
-  };
-
-  const renderPicker = (
-    value: string, 
-    setValue: (value: string) => void, 
-    options: {value: string, label: string}[]
-  ) => (
-    <View style={styles.pickerContainer}>
-      <Picker
-        selectedValue={value}
-        onValueChange={(itemValue) => setValue(itemValue)}
-        style={styles.picker}
-      >
-        {options.map((option) => (
-          <Picker.Item
-            key={option.value}
-            label={option.label}
-            value={option.value}
-          />
-        ))}
-      </Picker>
-    </View>
-  );
+   // Communication style options
+      const communicationStyleOptions: { id: COMMUNICATION_STYLE, label: string }[] = [
+          { id: "IT_NHAN_TIN", label: "Ít nhắn tin" },
+          { id: "NGHIEN_NHAN_TIN", label: "Nghiện nhắn tin" },
+          { id: "THICH_GAP_MAT_TRUC_TIEP", label: "Thích gặp mặt trực tiếp" },
+          { id: "THICH_GOI_DIEN", label: "Thích gọi điện" },
+          { id: "THICH_GOI_VIDEO", label: "Thích gọi video" },
+      ];
+  
+      // Love language options
+      const loveLanguageOptions: { id: LOVE_LANGUAGE, label: string }[] = [
+          { id: "NHUNG_CU_CHI_AU_YEM", label: "Những cử chỉ âu yếm" },
+          { id: "NHUNG_HANH_DONG_TINH_TE", label: "Những hành động tinh tế" },
+          { id: "NHUNG_LOI_KHEN", label: "Những lời khen" },
+          { id: "NHUNG_MON_QUA", label: "Những món quà" },
+          { id: "THOI_GIAN_BEN_NHAU", label: "Thời gian bên nhau" },
+      ];
+  
+      // Education options
+      const educationOptions: { id: EDUCATION, label: string }[] = [
+          { id: "CU_NHAN", label: "Cử nhân" },
+          { id: "DANG_HOC_DAI_HOC", label: "Đang học đại học" },
+          { id: "SAU_DAI_HOC", label: "Sau đại học" },
+          { id: "TIEN_SI", label: "Tiến sĩ" },
+          { id: "THPT", label: "Trung học phổ thông" },
+          { id: "THAC_SI", label: "Thạc sĩ" },
+          { id: "TRUONG_DAY_NGHE", label: "Trường dạy nghề" },
+      ];
+  
+      // Zodiac sign options
+      const zodiacSignOptions: { id: ZODIAC_SIGN, label: string }[] = [
+          { id: "BaoBinh", label: "Bảo Bình" },
+          { id: "SongNgu", label: "Song Ngư" },
+          { id: "BachDuong", label: "Bạch Dương" },
+          { id: "KimNguu", label: "Kim Ngưu" },
+          { id: "SongTu", label: "Song Tử" },
+          { id: "CuGiai", label: "Cự Giải" },
+          { id: "SuTu", label: "Sư Tử" },
+          { id: "XuNu", label: "Xử Nữ" },
+          { id: "ThienBinh", label: "Thiên Bình" },
+          { id: "BoCap", label: "Bọ Cạp" },
+          { id: "NhanMa", label: "Nhân Mã" },
+          { id: "MaKet", label: "Ma Kết" },
+      ];
 
   return (
     <View style={styles.section}>
@@ -106,7 +83,11 @@ export default function AboutSection({
       <View style={styles.fieldContainer}>
         <Text style={styles.fieldLabel}>Cung hoàng đạo</Text>
         {editMode 
-          ? renderPicker(zodiac, setZodiac, zodiacOptions)
+          ? <Picker  
+            value={zodiac}
+            setValue={setZodiac}
+            options={zodiacSignOptions}
+          />
           : <Text style={styles.fieldValue}>{MappingZodiacSign[user?.zodiac as ZODIAC_SIGN]}</Text>
         }
       </View>
@@ -115,7 +96,11 @@ export default function AboutSection({
       <View style={styles.fieldContainer}>
         <Text style={styles.fieldLabel}>Trình độ học vấn</Text>
         {editMode 
-          ? renderPicker(education, setEducation, educationOptions)
+          ? <Picker  
+            value={education}
+            setValue={setEducation}
+            options={educationOptions}
+          />
           : <Text style={styles.fieldValue}>{MappingEducation[user?.education as EDUCATION]}</Text>
         }
       </View>
@@ -124,7 +109,11 @@ export default function AboutSection({
       <View style={styles.fieldContainer}>
         <Text style={styles.fieldLabel}>Ngôn ngữ tình yêu</Text>
         {editMode 
-          ? renderPicker(loveLanguage, setLoveLanguage, loveLanguageOptions)
+          ? <Picker  
+            value={loveLanguage}
+            setValue={setLoveLanguage}
+            options={loveLanguageOptions}
+          />
           : <Text style={styles.fieldValue}>{MappingLoveLanguage[user?.loveLanguage as LOVE_LANGUAGE]}</Text>
         }
       </View>
@@ -133,7 +122,11 @@ export default function AboutSection({
       <View style={styles.fieldContainer}>
         <Text style={styles.fieldLabel}>Phong cách giao tiếp</Text>
         {editMode 
-          ? renderPicker(communicationStyle, setCommunicationStyle, communicationStyleOptions)
+          ? <Picker  
+            value={communicationStyle}
+            setValue={setCommunicationStyle}
+            options={communicationStyleOptions}
+          />
           : <Text style={styles.fieldValue}>{MappingCommunicationStyle[user?.communicationStyle as COMMUNICATION_STYLE]}</Text>
         }
       </View>

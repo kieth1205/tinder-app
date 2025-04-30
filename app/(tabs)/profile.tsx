@@ -36,18 +36,18 @@ interface MediaItem {
 }
 
 export default function ProfileScreen() {
-  const { user: authUser, checkAuth } = useContext(AuthContext);
+  const { user: authUser } = useContext(AuthContext);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   
   // Basic info
   const [name, setName] = useState('');
   const [birthday, setBirthday] = useState<Date | undefined>(undefined);
   const [gender, setGender] = useState('');
+  const [rawProfile, setRawProfile] = useState('');
   
   // Photos
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
@@ -110,6 +110,7 @@ export default function ProfileScreen() {
       setDiet(profileData.diet || '');
       setSocialMediaActivity(profileData.socialMediaActivity || '');
       setSleepHabit(profileData.sleepHabit || '');
+      setRawProfile(profileData.rawProfile || '');
     } catch (error) {
       console.error('Error loading profile:', error);
       Alert.alert('Lỗi', 'Không thể tải thông tin người dùng');
@@ -205,13 +206,10 @@ export default function ProfileScreen() {
       
       // Chuẩn bị dữ liệu cập nhật
       const updateData: UpdateProfileDto = {
-        name,
-        birthday: birthday ? birthday.toISOString() : undefined,
-        gender,
         images: updatedImages,
         interests: selectedInterests,
         lookingFor,
-        distance: Math.round(distance),
+        preferredDistance: Math.round(distance),
         zodiac,
         education,
         loveLanguage,
@@ -223,6 +221,7 @@ export default function ProfileScreen() {
         diet,
         socialMediaActivity,
         sleepHabit,
+        rawProfile,
       };
       
       // Gửi cập nhật lên API
@@ -230,7 +229,7 @@ export default function ProfileScreen() {
       
       // Làm mới thông tin hồ sơ
       await loadProfile();
-      await checkAuth();
+      // await checkAuth();
       
       Alert.alert('Thành công', 'Cập nhật thông tin thành công');
       setEditMode(false);
@@ -248,11 +247,9 @@ export default function ProfileScreen() {
     if (editMode) {
       // Hủy chỉnh sửa và khôi phục giá trị ban đầu
       if (user) {
-        console.log("user.birthday", user.birthday)
-
         setName(user.name || '');
-        setBirthday(user.birthday ? new Date(user.birthday) : undefined);
-        setGender(user.gender || '');
+        // setBirthday(user.birthday ? new Date(user.birthday) : undefined);
+        // setGender(user.gender || '');
         setImages(user.images || []);
         setSelectedInterests(user.interests || []);
         setLookingFor(user.lookingFor || '');
@@ -268,6 +265,7 @@ export default function ProfileScreen() {
         setDiet(user.diet || '');
         setSocialMediaActivity(user.socialMediaActivity || '');
         setSleepHabit(user.sleepHabit || '');
+        setRawProfile(user.rawProfile || '');
       }
       setSelectedMedia([]);
     }
@@ -338,12 +336,8 @@ export default function ProfileScreen() {
               editMode={editMode}
               name={name}
               setName={setName}
-              birthday={birthday}
-              setBirthday={setBirthday}
-              gender={gender}
-              setGender={setGender}
-              showDatePicker={showDatePicker}
-              setShowDatePicker={setShowDatePicker}
+              rawProfile={rawProfile}
+              setRawProfile={setRawProfile}
             />
           )}
           

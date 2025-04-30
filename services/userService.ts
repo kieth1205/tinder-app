@@ -26,7 +26,7 @@ export interface User {
 
 export interface UpdateProfileDto {
   name?: string;
-  birthday?: string;
+  birthday?: Date;
   gender?: string;
   images?: string[];
   interests?: string[];
@@ -43,7 +43,7 @@ export interface UpdateProfileDto {
   socialMediaActivity?: string;
   sleepHabit?: string;
   communicationStyle?: string;
-  distance?: number;
+  preferredDistance?: number;
 }
 
 const userService = {

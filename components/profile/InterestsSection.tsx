@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { User } from '@/services/userService';
-// Lấy danh sách sở thích từ constants
 import { interests as interestOptions } from '@/app/(auth)/register/InterestStep';
 import { INTEREST } from '@/types';
+
+const MAX_INTERESTS = 5;
 
 interface InterestsSectionProps {
   user: User;
@@ -22,6 +23,10 @@ export default function InterestsSection({
     if (selectedInterests.includes(interest)) {
       setSelectedInterests(selectedInterests.filter(i => i !== interest));
     } else {
+      if (selectedInterests.length >= MAX_INTERESTS) {
+        Alert.alert('Đã đạt giới hạn', 'Bạn chỉ có thể chọn tối đa 5 sở thích');
+        return;
+      }
       setSelectedInterests([...selectedInterests, interest]);
     }
   };

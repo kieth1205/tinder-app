@@ -214,8 +214,8 @@ export type SLEEP_PATTERN =
     | "GIO_GIAC_LINH_HOAT";
 
 export const MappingSleepPattern: Record<SLEEP_PATTERN, string> = {
-    DAY_SOM: "Đêm sộm",
-    CU_DEM: "Củ đêm",
+    DAY_SOM: "Dậy sớm",
+    CU_DEM: "Cú đêm",
     GIO_GIAC_LINH_HOAT: "Giờ giấc linh hoạt"
 }
 
