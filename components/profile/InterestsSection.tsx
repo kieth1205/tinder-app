@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { User } from '@/services/userService';
-// Lấy danh sách sở thích từ constants
 import { interests as interestOptions } from '@/app/(auth)/register/InterestStep';
 import { INTEREST } from '@/types';
+
+const MAX_INTERESTS = 5;
 
 interface InterestsSectionProps {
   user: User;
@@ -22,6 +23,10 @@ export default function InterestsSection({
     if (selectedInterests.includes(interest)) {
       setSelectedInterests(selectedInterests.filter(i => i !== interest));
     } else {
+      if (selectedInterests.length >= MAX_INTERESTS) {
+        Alert.alert('Đã đạt giới hạn', 'Bạn chỉ có thể chọn tối đa 5 sở thích');
+        return;
+      }
       setSelectedInterests([...selectedInterests, interest]);
     }
   };
@@ -31,8 +36,7 @@ export default function InterestsSection({
       <Text style={styles.sectionTitle}>Sở thích</Text>
       
       {editMode ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.interestsEditContainer}>
+        <View style={styles.interestsEditContainer}>
             {interestOptions.map((interest) => (
               <TouchableOpacity
                 key={interest.id}
@@ -52,8 +56,7 @@ export default function InterestsSection({
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>
-        </ScrollView>
+        </View>
       ) : (
         <View style={styles.interestTagsContainer}>
           {user?.interests && user.interests.length > 0 ? (
@@ -85,6 +88,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
   },
   interestsEditContainer: {
     flexDirection: 'row',

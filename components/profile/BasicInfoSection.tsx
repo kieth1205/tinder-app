@@ -1,21 +1,14 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { User } from '@/services/userService';
-// import DateTimePicker from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
-import { TouchableOpacity } from 'react-native';
 
 interface BasicInfoSectionProps {
   user: User;
   editMode: boolean;
   name: string;
   setName: (value: string) => void;
-  birthday: Date | undefined;
-  setBirthday: (value: Date) => void;
-  gender: string;
-  setGender: (value: string) => void;
-  showDatePicker: boolean;
-  setShowDatePicker: (value: boolean) => void;
+  rawProfile: string;
+  setRawProfile: (value: string) => void;
 }
 
 export default function BasicInfoSection({
@@ -23,31 +16,14 @@ export default function BasicInfoSection({
   editMode,
   name,
   setName,
-  birthday,
-  setBirthday,
-  gender,
-  setGender,
-  showDatePicker,
-  setShowDatePicker
+  rawProfile,
+  setRawProfile
 }: BasicInfoSectionProps) {
   const formatDate = (date?: Date | string) => {
     if (!date) return 'Chưa cập nhật';
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     return dateObj.toLocaleDateString('vi-VN');
   };
-
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setBirthday(selectedDate);
-    }
-  };
-
-  const genderOptions = [
-    { value: 'NAM', label: 'Nam' },
-    { value: 'NU', label: 'Nữ' },
-    { value: 'KHAC', label: 'Khác' }
-  ];
 
   return (
     <View style={styles.section}>
@@ -66,7 +42,24 @@ export default function BasicInfoSection({
           <Text style={styles.fieldValue}>{user?.name}</Text>
         )}
       </View>
-      
+        
+      <View style={styles.fieldContainer}>
+        <Text style={styles.fieldLabel}>Mô tả bản thân</Text>
+        {editMode ? (
+          <TextInput
+            style={styles.input}
+            value={rawProfile}
+            onChangeText={setRawProfile}
+            placeholder="Nhập mô tả về bạn"
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
+        ) : (
+          <Text style={styles.fieldValue}>{user?.rawProfile}</Text>
+        )}
+      </View>
+
       <View style={styles.fieldContainer}>
         <Text style={styles.fieldLabel}>Email</Text>
         <Text style={styles.fieldValue}>{user?.email}</Text>
@@ -80,29 +73,11 @@ export default function BasicInfoSection({
        </View>
       <View style={styles.fieldContainer}>
         <Text style={styles.fieldLabel}>Giới tính</Text>
-        {editMode ? (
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={gender}
-              onValueChange={(itemValue) => setGender(itemValue)}
-              style={styles.picker}
-            >
-              {genderOptions.map((option) => (
-                <Picker.Item
-                  key={option.value}
-                  label={option.label}
-                  value={option.value}
-                />
-              ))}
-            </Picker>
-          </View>
-        ) : (
-          <Text style={styles.fieldValue}>
+        <Text style={styles.fieldValue}>
             {user?.gender === 'MALE' ? 'Nam' : 
              user?.gender === 'FEMALE' ? 'Nữ' : 
              user?.gender === 'OTHER' ? 'Khác' : 'Chưa cập nhật'}
           </Text>
-        )}
       </View>
     </View>
   );
@@ -154,5 +129,30 @@ const styles = StyleSheet.create({
   picker: {
     height: 50,
     width: '100%',
+  },
+  optionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 10,
+  },
+  genderOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  selectedOption: {
+    backgroundColor: '#FF4C6D',
+    borderColor: '#FF4C6D',
+  },
+  optionText: {
+    color: '#666',
+  },
+  selectedText: {
+    color: "#fff",
   },
 });

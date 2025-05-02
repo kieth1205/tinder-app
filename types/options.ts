@@ -40,15 +40,15 @@ export type ZODIAC_SIGN =
 
 export const MappingZodiacSign: Record<ZODIAC_SIGN, string> = {
     "BachDuong": "Bạch Dương",
-    "KimNguu": "Cựu",
+    "KimNguu": "Kim Ngưu",
     "SongTu": "Sư Tử",
-    "CuGiai": "Cựu",
+    "CuGiai": "Cự Giải",
     "SuTu": "Sư Tử",
     "XuNu": "Xử Nữ",
     "ThienBinh": "Thiên Bình",
     "BoCap": "Bọ Cạp",
     "NhanMa": "Nhân Mã",
-    "MaKet": "Mê Kè",
+    "MaKet": "Ma Kết",
     "BaoBinh": "Bảo Bình",
     "SongNgu": "Song Ngư"
 }
@@ -214,8 +214,8 @@ export type SLEEP_PATTERN =
     | "GIO_GIAC_LINH_HOAT";
 
 export const MappingSleepPattern: Record<SLEEP_PATTERN, string> = {
-    DAY_SOM: "Đêm sộm",
-    CU_DEM: "Củ đêm",
+    DAY_SOM: "Dậy sớm",
+    CU_DEM: "Cú đêm",
     GIO_GIAC_LINH_HOAT: "Giờ giấc linh hoạt"
 }
 

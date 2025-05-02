@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { User } from '@/services/userService';
-import { Picker } from '@react-native-picker/picker';
 import Slider from '@react-native-community/slider';
 import { LOOKING_FOR, MappingLookingFor } from '@/types';
+import { Picker } from '../inputs';
 
 interface PreferencesSectionProps {
   user: User;
@@ -22,11 +22,60 @@ export default function PreferencesSection({
   preferredDistance,
   setDistance
 }: PreferencesSectionProps) {
+  
   const lookingForOptions = [
-    { value: 'NAM', label: 'Nam' },
-    { value: 'NU', label: 'Nữ' },
-    { value: 'CA_HAI', label: 'Cả hai' }
+    {
+      id: "NGUOI_YEU",
+      label: "Người yêu",
+    },
+    {
+      id: "HEN_HO_LAU_DAI",
+      label: "Bạn hẹn hò lâu dài",
+    },
+    {
+      id: "BAT_KI_DIEU_GI_CO_THE",
+      label: "Bất kì điều gì có thể",
+    },
+    {
+      id: "QUAN_HE_KHONG_RANG_BUOC",
+      label: "Quan hệ không ràng buộc",
+    },
+    {
+      id: "NHUNG_NGUOI_BAN_MOI",
+      label: "Những người bạn mới",
+    },
+    {
+      id: "CHUA_RO",
+      label: "Mình cũng chưa rõ lắm",
+    },
   ];
+
+  const renderPicker = (
+      value: string, 
+      setValue: (value: string) => void, 
+      options: {id: string, label: string}[]
+    ) => (
+      <View style={styles.pickerContainer}>
+        {options.map((option) => (
+          <TouchableOpacity
+            key={option.id}
+            style={[
+              styles.pickerButton,
+              value === option.id && styles.pickerButtonSelected,
+            ]}
+            onPress={() => setValue(option.id)}
+          >
+            <Text
+              style={[
+                styles.pickerButtonText,
+                value === option.id && styles.pickerButtonTextSelected,
+              ]}
+            >{option.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
 
   return (
     <View style={styles.section}>
@@ -35,21 +84,11 @@ export default function PreferencesSection({
       <View style={styles.fieldContainer}>
         <Text style={styles.fieldLabel}>Đang tìm kiếm</Text>
         {editMode ? (
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={lookingFor}
-              onValueChange={(itemValue) => setLookingFor(itemValue)}
-              style={styles.picker}
-            >
-              {lookingForOptions.map((option) => (
-                <Picker.Item
-                  key={option.value}
-                  label={option.label}
-                  value={option.value}
-                />
-              ))}
-            </Picker>
-          </View>
+          <Picker
+            value={lookingFor}
+            setValue={setLookingFor}
+            options={lookingForOptions}
+          />
         ) : (
           <Text style={styles.fieldValue}>
             {MappingLookingFor[user?.lookingFor as LOOKING_FOR]}
@@ -61,19 +100,22 @@ export default function PreferencesSection({
         <Text style={styles.fieldLabel}>Khoảng cách tối đa</Text>
         <View>
           {editMode ? (
-            <View>
-              <Slider
-                style={styles.slider}
-                minimumValue={1}
-                maximumValue={100}
-                step={1}
-                value={preferredDistance}
-                onValueChange={setDistance}
-                minimumTrackTintColor="#FF4C6D"
-                maximumTrackTintColor="#D3D3D3"
-                thumbTintColor="#FF4C6D"
-              />
-              <Text style={styles.distanceValue}>{Math.round(preferredDistance)} km</Text>
+            <View style={styles.distanceContainer}>
+              <View style={styles.sliderContainer}>
+                <Slider
+                  style={styles.slider}
+                  minimumValue={1}
+                  maximumValue={100}
+                  value={preferredDistance}
+                  onValueChange={setDistance}
+                  minimumTrackTintColor="#FF4458"
+                  maximumTrackTintColor="#e0e0e0"
+                  thumbTintColor="#FF4458"
+                />
+                <View style={styles.valueContainer}>
+                  <Text style={styles.currentValue}>{preferredDistance.toFixed(0)} km</Text>
+                </View>
+              </View>
             </View>
           ) : (
             <Text style={styles.fieldValue}>
@@ -126,5 +168,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     marginTop: 4,
+  },
+
+  distanceContainer: {
+    marginBottom: 30,
+  },
+  sliderContainer: {
+    marginVertical: 20,
+  },
+  valueContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 5,
+    marginTop: 5,
+  },
+  minValue: {
+    fontSize: 12,
+    color: "#666",
+  },
+  currentValue: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FF4458",
+  },
+  pickerButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  pickerButtonText: {
+    color: '#666',
+  },
+  pickerButtonTextSelected: {
+    color: 'white',
+  },
+  pickerButtonSelected: {
+    backgroundColor: '#FF4C6D',
+    borderColor: '#FF4C6D',
   }
 });

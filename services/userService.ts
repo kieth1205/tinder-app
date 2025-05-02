@@ -22,11 +22,15 @@ export interface User {
   sleepHabit?: string;
   communicationStyle?: string;
   preferredDistance?: number;
+  
+  isVip?: boolean;
+  balance?: number; // Số tiền hiện có
+  vipExpireDate?: string; // Ngày hết hạn VIP
 }
 
 export interface UpdateProfileDto {
   name?: string;
-  birthday?: string;
+  birthday?: Date;
   gender?: string;
   images?: string[];
   interests?: string[];
@@ -43,7 +47,7 @@ export interface UpdateProfileDto {
   socialMediaActivity?: string;
   sleepHabit?: string;
   communicationStyle?: string;
-  distance?: number;
+  preferredDistance?: number;
 }
 
 const userService = {
