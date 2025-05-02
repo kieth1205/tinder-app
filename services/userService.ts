@@ -22,6 +22,10 @@ export interface User {
   sleepHabit?: string;
   communicationStyle?: string;
   preferredDistance?: number;
+  
+  isVip?: boolean;
+  balance?: number; // Số tiền hiện có
+  vipExpireDate?: string; // Ngày hết hạn VIP
 }
 
 export interface UpdateProfileDto {

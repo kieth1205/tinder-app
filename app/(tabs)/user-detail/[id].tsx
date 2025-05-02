@@ -7,6 +7,9 @@ import { ALCOHOL_CONSUMPTION, COMMUNICATION_STYLE, DIETARY_PREFERENCE, EDUCATION
 import { useGetMatches } from '@/hooks/use-get-matches';
 import messageService from '@/services/messageService';
 import { AuthContext } from '@/context/AuthProvider';
+import useVipStatus from '@/hooks/useVipStatus';
+import DirectMessageButton from '@/components/DirectMessageButton';
+import DirectMessageModal from '@/components/features/vip/DirectMessageModal';
 
 export default function UserDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,7 +20,9 @@ export default function UserDetailScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [message, setMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
-  
+  const { isVip } = useVipStatus();
+  const [directMessageModalVisible, setDirectMessageModalVisible] = useState(false);
+
   useEffect(() => {
     if (users && id) {
       const foundUser = users.find(u => u.id === id);
@@ -47,30 +52,30 @@ export default function UserDetailScreen() {
       </SafeAreaView>
     );
   }
-  
+
   const startConversation = async () => {
     if (!message.trim()) {
       Alert.alert('Thông báo', 'Vui lòng nhập nội dung tin nhắn');
       return;
     }
-    
+
     if (!currentUser?.id) {
       Alert.alert('Thông báo', 'Bạn cần đăng nhập để gửi tin nhắn');
       return;
     }
-    
+
     try {
       setSendingMessage(true);
-      
+
       const result = await messageService.startConversation(
         user.id,
         message.trim()
       );
-      
+
       if (result) {
         setModalVisible(false);
         setMessage('');
-        
+
         // Chuyển đến màn hình chat với người dùng này
         router.push({
           pathname: '/(tabs)/chat/[id]',
@@ -94,51 +99,52 @@ export default function UserDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Modal gửi tin nhắn đầu tiên */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Gửi tin nhắn cho {user.name}</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <AntDesign name="close" size={24} color="#333" />
+      {isVip && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Gửi tin nhắn cho {user.name}</Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <AntDesign name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+
+              <TextInput
+                style={styles.messageInput}
+                placeholder="Nhập tin nhắn..."
+                value={message}
+                onChangeText={setMessage}
+                multiline
+                maxLength={500}
+              />
+
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={startConversation}
+                disabled={sendingMessage}
+              >
+                {sendingMessage ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.sendButtonText}>Gửi tin nhắn</Text>
+                )}
               </TouchableOpacity>
             </View>
-            
-            <TextInput
-              style={styles.messageInput}
-              placeholder="Nhập tin nhắn..."
-              value={message}
-              onChangeText={setMessage}
-              multiline
-              maxLength={500}
-            />
-            
-            <TouchableOpacity 
-              style={styles.sendButton} 
-              onPress={startConversation}
-              disabled={sendingMessage}
-            >
-              {sendingMessage ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.sendButtonText}>Gửi tin nhắn</Text>
-              )}
-            </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
-      
+        </Modal>
+      )}
+
       <ScrollView style={styles.scrollView}>
         {/* Header với nút back */}
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => router.back()}
           >
             <Ionicons name="arrow-back" size={24} color="#000" />
@@ -146,7 +152,7 @@ export default function UserDetailScreen() {
           <Text style={styles.headerTitle}>Thông tin chi tiết</Text>
           <View style={styles.placeholder} />
         </View>
-        
+
         {/* Ảnh đại diện và thông tin cơ bản */}
         <View style={styles.profileHeader}>
           <Image
@@ -196,7 +202,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.zodiac && (
                 <View style={styles.infoItem}>
                   <FontAwesome5 name="star" size={16} color="#777" />
@@ -206,7 +212,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.loveLanguage && (
                 <View style={styles.infoItem}>
                   <Ionicons name="heart" size={16} color="#777" />
@@ -216,7 +222,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.pet && (
                 <View style={styles.infoItem}>
                   <MaterialCommunityIcons name="dog" size={16} color="#777" />
@@ -226,7 +232,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.alcoholConsumption && (
                 <View style={styles.infoItem}>
                   <FontAwesome5 name="wine-glass-alt" size={16} color="#777" />
@@ -236,7 +242,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.smoking && (
                 <View style={styles.infoItem}>
                   <MaterialCommunityIcons name="smoking" size={16} color="#777" />
@@ -246,7 +252,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.exerciseHabit && (
                 <View style={styles.infoItem}>
                   <MaterialCommunityIcons name="run" size={16} color="#777" />
@@ -256,7 +262,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.diet && (
                 <View style={styles.infoItem}>
                   <MaterialCommunityIcons name="food-apple" size={16} color="#777" />
@@ -266,7 +272,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.socialMediaActivity && (
                 <View style={styles.infoItem}>
                   <FontAwesome5 name="instagram" size={16} color="#777" />
@@ -276,7 +282,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.sleepHabit && (
                 <View style={styles.infoItem}>
                   <Ionicons name="moon" size={16} color="#777" />
@@ -286,7 +292,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.communicationStyle && (
                 <View style={styles.infoItem}>
                   <MaterialCommunityIcons name="message-text" size={16} color="#777" />
@@ -296,7 +302,7 @@ export default function UserDetailScreen() {
                   </Text>
                 </View>
               )}
-              
+
               {user.additionalInfo.lookingFor && (
                 <View style={styles.infoItem}>
                   <Ionicons name="search" size={16} color="#777" />
@@ -315,26 +321,28 @@ export default function UserDetailScreen() {
           <Text style={styles.sectionTitle}>Thư viện ảnh</Text>
           <View style={styles.galleryContainer}>
             {user.images.map((image, index) => (
-              <Image 
-                key={index} 
-                source={{ uri: image }} 
-                style={styles.galleryImage} 
+              <Image
+                key={index}
+                source={{ uri: image }}
+                style={styles.galleryImage}
               />
             ))}
           </View>
         </View>
       </ScrollView>
-      
+
       {/* Nút bắt đầu trò chuyện */}
-      <View style={styles.chatButtonContainer}>
-        <TouchableOpacity 
-          style={styles.chatButton}
-          onPress={() => setModalVisible(true)}
-        >
-          <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
-          <Text style={styles.chatButtonText}>Bắt đầu trò chuyện</Text>
-        </TouchableOpacity>
-      </View>
+      {isVip && (
+        <View style={styles.chatButtonContainer}>
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() => setModalVisible(true)}
+          >
+            <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
+            <Text style={styles.chatButtonText}>Bắt đầu trò chuyện</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
