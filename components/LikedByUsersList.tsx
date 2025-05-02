@@ -1,37 +1,55 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View, Image, Pressable, ActivityIndicator } from 'react-native';
 import useVipStatus from '@/hooks/useVipStatus';
-import vipService, { LikedByUser } from '@/services/vipService';
+import vipService from '@/services/vipService';
 import { useRouter } from 'expo-router';
 
+interface LikerInfo {
+  liked_at: string;
+  user: {
+    id: string;
+    name: string;
+    images: string[];
+    gender: string;
+    birthday: string | null;
+    interests: string[];
+    job: string | null;
+  }
+}
+
 const LikedByUsersList = () => {
-  const [likedByUsers, setLikedByUsers] = useState<LikedByUser[]>([]);
+  const [likedByUsers, setLikedByUsers] = useState<LikerInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isVip } = useVipStatus();
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchLikedByUsers = async () => {
-      if (!isVip) return;
-      
-      try {
-        setLoading(true);
-        const users = await vipService.getLikedByUsers();
-        setLikedByUsers(users);
-      } catch (err) {
-        setError('Không thể tải danh sách người đã thích bạn');
-        console.error('Lỗi khi tải danh sách người đã thích:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchLikedByUsers = async () => {
+    if (!isVip) return;
+    
+    try {
+      setLoading(true);
+      const users = await vipService.getLikedByUsers();
+      setLikedByUsers(users as unknown as LikerInfo[]);
+    } catch (err) {
+      setError('Không thể tải danh sách người đã thích bạn');
+      console.error('Lỗi khi tải danh sách người đã thích:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchLikedByUsers();
   }, [isVip]);
 
   const handleUserPress = (userId: string) => {
     router.push(`/user-detail/${userId}`);
+  };
+
+  const formatLikedDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN');
   };
 
   if (!isVip) {
@@ -61,38 +79,35 @@ const LikedByUsersList = () => {
     );
   }
 
-  if (likedByUsers.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Chưa có ai thích bạn</Text>
-      </View>
-    );
-  }
-
   return (
     <FlatList
       data={likedByUsers}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item, index) => item.user.id || index.toString()}
       renderItem={({ item }) => (
         <Pressable 
           style={styles.userItem}
-          onPress={() => handleUserPress(item.id)}
+          onPress={() => handleUserPress(item.user.id)}
         >
           <Image 
-            source={{ uri: item.images[0] }} 
+            source={{ uri: item.user.images[0] }} 
             style={styles.userImage} 
           />
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{item.name}</Text>
+            <Text style={styles.userName}>{item.user.name}</Text>
             <Text style={styles.userMeta}>
-              {item.age ? `${item.age} tuổi` : ''} 
-              {item.age && item.distance ? ' • ' : ''}
-              {item.distance ? `${item.distance} km` : ''}
+              {item.user.gender === 'MALE' ? 'Nam' : 'Nữ'}
+              {item.user.interests && item.user.interests.length > 0 ? ' • ' : ''}
+              {item.user.interests && item.user.interests.length > 0 ? 
+                `${item.user.interests.length} sở thích` : ''}
             </Text>
+            <Text style={styles.likedDate}>Đã thích bạn: {formatLikedDate(item.liked_at)}</Text>
           </View>
         </Pressable>
       )}
       contentContainerStyle={styles.listContent}
+      onRefresh={fetchLikedByUsers}
+      refreshing={loading}
+      ListEmptyComponent={<Text style={styles.emptyText}>Chưa có ai thích bạn</Text>}
     />
   );
 };
@@ -130,6 +145,11 @@ const styles = StyleSheet.create({
   userMeta: {
     fontSize: 14,
     color: '#666',
+  },
+  likedDate: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
   },
   loadingContainer: {
     flex: 1,

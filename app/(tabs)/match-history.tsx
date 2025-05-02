@@ -1,17 +1,17 @@
 import { AuthHeader } from '@/components/AuthHeader';
-import LikedByUsersList from '@/components/LikedByUsersList';
+import MatchHistoryList from '@/components/MatchHistoryList';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const LikedByScreen = () => {
+const MatchHistoryScreen = () => {
   const router = useRouter();
 
   return (
     <SafeAreaView style={styles.container}>
-      <AuthHeader onBack={() => router.push("/(tabs)/profile")} />
-      <LikedByUsersList />
+      <AuthHeader onBack={() => router.push("/(tabs)/profile")} title="Lịch sử match" />
+      <MatchHistoryList />
     </SafeAreaView>
   );
 };
@@ -23,4 +23,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LikedByScreen;
+export default MatchHistoryScreen;

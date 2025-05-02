@@ -1,4 +1,4 @@
-import { SafeAreaView, StyleSheet, ActivityIndicator } from "react-native";
+import { SafeAreaView, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { Text, View } from "@/components/Themed";
 import React, { useState, useMemo, useEffect } from "react";
 import { TouchableOpacity } from "react-native";
@@ -6,8 +6,20 @@ import TinderCard from "react-tinder-card";
 import { TinderCard as TinderCardCustom } from "@/components/features";
 import { Ionicons } from "@expo/vector-icons"; // Ensure you have @expo/vector-icons installed
 import { useGetMatches } from "@/hooks/use-get-matches";
+import swipeService, { SwipeDirection } from "@/services/swipeService";
+import useVipStatus from "@/hooks/useVipStatus";
+import { useFocusEffect } from "expo-router";
 
+// Map tinder-card directions to our API SwipeDirection enum
 type Direction = "left" | "right" | "up";
+const mapDirectionToSwipeDirection = (direction: Direction): SwipeDirection => {
+  switch (direction) {
+    case "left": return SwipeDirection.LEFT;
+    case "right": return SwipeDirection.RIGHT;
+    case "up": return SwipeDirection.UP;
+    default: return SwipeDirection.LEFT;
+  }
+};
 
 // Fallback data trong trường hợp API fails
 const fallbackData = [
@@ -25,43 +37,91 @@ const alreadyRemoved: string[] = [];
 
 export default function TabOneScreen() {
   const { data: matchesData, isLoading, error } = useGetMatches();
-  
+
   const [characters, setCharacters] = useState<any[]>([]);
-  const [lastDirection, setLastDirection] = useState<string>();
   const [highlightedButton, setHighlightedButton] = useState<Direction | null>(null);
 
-  // Cập nhật characters khi matchesData thay đổi
+  const { isVip, refreshVipStatus } = useVipStatus();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshVipStatus();
+    }, [refreshVipStatus])
+  );
+
+  // Cập nhật danh sách người dùng khi matchesData thay đổi
   useEffect(() => {
     if (matchesData && matchesData.length > 0) {
       setCharacters(matchesData);
     } else if (error) {
-      // Sử dụng fallbackData nếu có lỗi
+      // Sử dụng dữ liệu dự phòng nếu có lỗi
       console.error("Error fetching matches:", error);
       setCharacters(fallbackData);
     }
   }, [matchesData, error]);
 
-  // Tạo refs dựa trên số lượng characters
+  // Tạo refs dựa trên số lượng người dùng
   const childRefs = useMemo(() => {
     return Array(characters.length)
       .fill(0)
       .map(() => React.createRef());
   }, [characters.length]);
 
-  const swiped = (direction: Direction, nameToDelete: string) => {
-    console.log("removing: " + nameToDelete + " to the " + direction);
-    setLastDirection(direction);
+  const swiped = async (direction: Direction, nameToDelete: string) => {
+    // Kiểm tra nếu người dùng không phải VIP và đang cố gắng super like
+    if (direction === "up" && !isVip) {
+      Alert.alert(
+        "Tính năng dành cho VIP",
+        "Bạn cần nâng cấp tài khoản VIP để sử dụng tính năng Super Like.",
+        [{ text: "Đã hiểu", style: "default" }]
+      );
+      return;
+    }
+
     alreadyRemoved.push(nameToDelete);
     setHighlightedButton(direction); // Highlight button based on swipe direction
+
+    // Tìm người dùng có tên này để lấy ID
+    const user = characters.find((character) => character.name === nameToDelete);
+    if (user && user.id) {
+      try {
+        // Gọi API swipe với hướng vuốt tương ứng
+        const apiDirection = mapDirectionToSwipeDirection(direction);
+        const response = await swipeService.createSwipe(user.id, apiDirection);
+
+        // Nếu có match thì hiển thị thông báo
+        if (response.match) {
+          Alert.alert(
+            "Đã Match! 🎉",
+            `Bạn và ${nameToDelete} đã thích nhau.`,
+            [{ text: "Được", style: "default" }]
+          );
+        }
+      } catch (error) {
+        console.error("Error while swiping:", error);
+      }
+    } else {
+      console.warn("User ID not found for:", nameToDelete);
+    }
   };
 
   const outOfFrame = (name: string) => {
-    console.log(name + " left the screen!");
+    console.log(name + " đã rời khỏi màn hình!");
     setCharacters((prevChars) => prevChars.filter(character => character.name !== name));
     setHighlightedButton(null);
   };
-  
+
   const swipe = (dir: Direction) => {
+    // Kiểm tra nếu người dùng không phải VIP và đang cố gắng super like
+    if (dir === "up" && !isVip) {
+      Alert.alert(
+        "Tính năng dành cho VIP",
+        "Bạn cần nâng cấp tài khoản VIP để sử dụng tính năng Super Like.",
+        [{ text: "Đã hiểu", style: "default" }]
+      );
+      return;
+    }
+
     const cardsLeft = characters.filter(
       (person) => !alreadyRemoved.includes(person.name)
     );
@@ -76,10 +136,15 @@ export default function TabOneScreen() {
   };
 
   const onSwipeWillStart = (dir: Direction) => {
-    setHighlightedButton(dir); // Highlight button while swiping
+    // Kiểm tra nếu người dùng không phải VIP và đang cố gắng super like
+    if (dir === "up" && !isVip) {
+      // Không cập nhật highlightedButton cho super like nếu không phải VIP
+      return;
+    }
+    setHighlightedButton(dir);
   };
 
-  // Hiển thị loading khi đang fetch dữ liệu
+  // Hiển thị loading khi đang tải dữ liệu
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, styles.loadingContainer]}>
@@ -88,16 +153,6 @@ export default function TabOneScreen() {
       </SafeAreaView>
     );
   }
-
-  // // Hiển thị thông báo khi không có matches
-  // if (characters.length === 0) {
-  //   return (
-  //     <SafeAreaView style={[styles.container, styles.emptyContainer]}>
-  //       <Ionicons name="heart-dislike" size={50} color="#ccc" />
-  //       <Text style={styles.emptyText}>Không tìm thấy matches nào</Text>
-  //     </SafeAreaView>
-  //   );
-  // }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -110,9 +165,8 @@ export default function TabOneScreen() {
             onCardLeftScreen={() => outOfFrame(character.name)}
             onSwipeRequirementFulfilled={(dir) => {
               onSwipeWillStart(dir as Direction);
-              console.log("Swipe requirement fulfilled for " + dir);
             }}
-            onSwipeRequirementUnfulfilled={() => setHighlightedButton(null)} // Reset if swipe is canceled
+            onSwipeRequirementUnfulfilled={() => setHighlightedButton(null)} // Đặt lại nếu vuốt bị hủy
           >
             <TinderCardCustom character={character} />
           </TinderCard>
@@ -123,33 +177,37 @@ export default function TabOneScreen() {
           style={[
             styles.iconButton,
             styles.dislikeButton,
-            highlightedButton === "left" && styles.activeIcon, // Highlight if swiping left
-            highlightedButton === "right" && { opacity: 0 }, // Hide when swiping right
-            highlightedButton === "up" && { opacity: 0 }, // Hide when swiping up
+            highlightedButton === "left" && styles.activeIcon, // Làm nổi bật nếu vuốt sang trái
+            highlightedButton === "right" && { opacity: 0 }, // Ẩn khi vuốt sang phải
+            highlightedButton === "up" && { opacity: 0 }, // Ẩn khi vuốt lên trên
           ]}
           onPress={() => swipe("left")}
         >
           <Ionicons name="close" size={36} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.iconButton,
-            styles.superLikeButton,
-            highlightedButton === "up" && styles.activeIcon, // Highlight if swiping up
-            highlightedButton === "right" && { opacity: 0 }, // Hide when swiping right
-            highlightedButton === "left" && { opacity: 0 }, // Hide when swiping left
-          ]}
-          onPress={() => swipe("up")}
-        >
-          <Ionicons name="star" size={36} color="white" />
-        </TouchableOpacity>
+        {
+          isVip && (
+            <TouchableOpacity
+              style={[
+                styles.iconButton,
+                styles.superLikeButton,
+                highlightedButton === "up" && styles.activeIcon, // Làm nổi bật nếu vuốt lên trên
+                highlightedButton === "right" && { opacity: 0 }, // Ẩn khi vuốt sang phải
+                highlightedButton === "left" && { opacity: 0 }, // Ẩn khi vuốt sang trái
+              ]}
+              onPress={() => swipe("up")}
+            >
+              <Ionicons name="star" size={36} color="white" />
+            </TouchableOpacity>
+          )
+        }
         <TouchableOpacity
           style={[
             styles.iconButton,
             styles.likeButton,
-            highlightedButton === "right" && styles.activeIcon, // Highlight if swiping right
-            highlightedButton === "left" && { opacity: 0 }, // Hide when swiping left
-            highlightedButton === "up" && { opacity: 0 }, // Hide when swiping up
+            highlightedButton === "right" && styles.activeIcon, // Làm nổi bật nếu vuốt sang phải
+            highlightedButton === "left" && { opacity: 0 }, // Ẩn khi vuốt sang trái
+            highlightedButton === "up" && { opacity: 0 }, // Ẩn khi vuốt lên trên
           ]}
           onPress={() => swipe("right")}
         >

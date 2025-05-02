@@ -12,22 +12,22 @@ const PopularUsersList = () => {
   const { isVip } = useVipStatus();
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchPopularUsers = async () => {
-      if (!isVip) return;
-      
-      try {
-        setLoading(true);
-        const users = await vipService.getPopularUsers(20);
-        setPopularUsers(users);
-      } catch (err) {
-        setError('Không thể tải danh sách người nổi bật');
-        console.error('Lỗi khi tải danh sách người nổi bật:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchPopularUsers = async () => {
+    if (!isVip) return;
+    
+    try {
+      setLoading(true);
+      const users = await vipService.getPopularUsers(20);
+      setPopularUsers(users);
+    } catch (err) {
+      setError('Không thể tải danh sách người nổi bật');
+      console.error('Lỗi khi tải danh sách người nổi bật:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPopularUsers();
   }, [isVip]);
 
@@ -62,14 +62,6 @@ const PopularUsersList = () => {
     );
   }
 
-  if (popularUsers.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Không có dữ liệu người dùng nổi bật</Text>
-      </View>
-    );
-  }
-
   return (
     <FlatList
       data={popularUsers}
@@ -85,19 +77,21 @@ const PopularUsersList = () => {
           />
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{item.name}</Text>
-            <Text style={styles.userMeta}>
-              {item.age ? `${item.age} tuổi` : ''} 
-              {item.age && item.distance ? ' • ' : ''}
-              {item.distance ? `${item.distance} km` : ''}
-            </Text>
             <View style={styles.likeContainer}>
               <Ionicons name="heart" size={14} color="#FF4D67" />
-              <Text style={styles.likeCount}>{item.likeCount} lượt thích</Text>
+              <Text style={styles.likeCount}>{item.superLikesCount} lượt siêu thích</Text>
+            </View>
+            <View style={styles.likeContainer}>
+              <Ionicons name="heart-outline" size={14} color="#FF4D67" />
+              <Text style={styles.likeCount}>{item.likesCount} lượt thích</Text>
             </View>
           </View>
         </Pressable>
       )}
       contentContainerStyle={styles.listContent}
+      onRefresh={fetchPopularUsers}
+      refreshing={loading}
+      ListEmptyComponent={<Text style={styles.emptyText}>Không có dữ liệu người dùng nổi bật</Text>}
     />
   );
 };

@@ -13,7 +13,7 @@ import {
   Platform
 } from 'react-native';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import { AuthContext } from '@/context/AuthProvider';
+import { AuthContext, useAuth } from '@/context/AuthProvider';
 import { Button } from '@/components/button/ContinueButton';
 import userService, { User, UpdateProfileDto } from '@/services/userService';
 import * as ImagePicker from 'expo-image-picker';
@@ -41,6 +41,7 @@ interface MediaItem {
 
 export default function ProfileScreen() {
   const { user: authUser } = useContext(AuthContext);
+  const { logout } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -356,6 +357,24 @@ export default function ProfileScreen() {
             </View>
           )}
 
+          <View style={styles.vipFeatures}>
+            <TouchableOpacity
+              style={styles.featureButton}
+              onPress={() => router.push('/match-history')}
+            >
+              <Ionicons name="heart" size={20} color="#FF4D67" />
+              <Text style={styles.featureButtonText}>Lịch sử match</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.featureButton}
+              onPress={() => router.push('/subscription-history')}
+            >
+              <Ionicons name="star" size={20} color="#FF4D67" />
+              <Text style={styles.featureButtonText}>Lịch sử mua gói VIP</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Hồ sơ của tôi</Text>
             <TouchableOpacity
@@ -464,6 +483,26 @@ export default function ProfileScreen() {
               style={styles.saveButton}
             />
           )}
+
+          {/* Nút đăng xuất */}
+          <View style={styles.logoutContainer}>
+            <TouchableOpacity 
+              style={styles.logoutButton}
+              onPress={() => {
+                Alert.alert(
+                  'Đăng xuất',
+                  'Bạn có chắc chắn muốn đăng xuất không?',
+                  [
+                    {text: 'Hủy', style: 'cancel'},
+                    {text: 'Đăng xuất', style: 'destructive', onPress: logout}
+                  ]
+                );
+              }}
+            >
+              <Ionicons name="log-out-outline" size={20} color="white" />
+              <Text style={styles.logoutButtonText}>Đăng xuất</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -574,5 +613,30 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
     color: '#333',
+  },
+  logoutContainer: {
+    alignItems: 'center',
+    padding: 16,
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    backgroundColor: '#FF3B30',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  logoutButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    marginLeft: 8,
+    fontSize: 16,
   },
 });

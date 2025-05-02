@@ -1,5 +1,7 @@
 import { VipPackage } from '@/constants/vipPackage';
 import api from './api';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 export interface LikedByUser {
   id: string;
@@ -14,7 +16,8 @@ export interface PopularUser {
   id: string;
   name: string;
   images: string[];
-  likeCount: number;
+  likesCount: number;
+  superLikesCount: number;
   age?: number;
   distance?: number;
 }
@@ -38,6 +41,41 @@ export interface BalanceResponse {
 export interface VipStatusResponse {
   isVip: boolean;
   expireDate?: string;
+}
+
+export interface SubscriptionHistory {
+  id: string;
+  packageName: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  paymentMethod: string;
+  price: number;
+  purchasedAt: string;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  senderId: string;
+  timestamp: string;
+}
+
+export interface MatchedUser {
+  id: string;
+  name: string;
+  images: string[];
+  gender: string;
+  birthday: string;
+  interests: string[];
+}
+
+export interface MatchHistory {
+  id: string;
+  matchDate: string;
+  stabilityScore: number;
+  matchedUser: MatchedUser;
+  lastMessage: Message | null;
 }
 
 class VipService {
@@ -72,7 +110,7 @@ class VipService {
    */
   async getLikedByUsers(): Promise<LikedByUser[]> {
     try {
-      const response = await api.get<LikedByUser[]>('/vip/liked-by', {
+      const response = await api.get<LikedByUser[]>('/vip/likes', {
         requireAuth: true
       });
 
@@ -220,6 +258,58 @@ class VipService {
       return response.data || [];
     } catch (error) {
       console.error('Lỗi khi lấy danh sách gói VIP:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Lấy lịch sử đăng ký gói VIP
+   */
+  async getSubscriptionHistory(): Promise<SubscriptionHistory[]> {
+    try {
+      const response = await api.get<SubscriptionHistory[]>('/users/subscription-history', {
+        requireAuth: true
+      });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      // Format các ngày tháng nếu cần
+      const subscriptions = response.data || [];
+      return subscriptions.map(sub => ({
+        ...sub,
+        startDate: new Date(sub.startDate).toLocaleDateString('vi-VN'),
+        endDate: new Date(sub.endDate).toLocaleDateString('vi-VN'),
+        purchasedAt: formatDistanceToNow(new Date(sub.purchasedAt), { addSuffix: true, locale: vi })
+      }));
+    } catch (error) {
+      console.error('Lỗi khi lấy lịch sử đăng ký VIP:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Lấy lịch sử các match thành công
+   */
+  async getMatchHistory(): Promise<MatchHistory[]> {
+    try {
+      const response = await api.get<MatchHistory[]>('/users/match-history', {
+        requireAuth: true
+      });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      // Format date và các thông tin khác nếu cần
+      const matchHistory = response.data || [];
+      return matchHistory.map(match => ({
+        ...match,
+        matchDate: formatDistanceToNow(new Date(match.matchDate), { addSuffix: true, locale: vi })
+      }));
+    } catch (error) {
+      console.error('Lỗi khi lấy lịch sử match:', error);
       return [];
     }
   }

@@ -1,17 +1,17 @@
 import { AuthHeader } from '@/components/AuthHeader';
-import LikedByUsersList from '@/components/LikedByUsersList';
+import SubscriptionHistoryList from '@/components/SubscriptionHistoryList';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const LikedByScreen = () => {
+const SubscriptionHistoryScreen = () => {
   const router = useRouter();
 
   return (
     <SafeAreaView style={styles.container}>
-      <AuthHeader onBack={() => router.push("/(tabs)/profile")} />
-      <LikedByUsersList />
+      <AuthHeader title="Lịch sử mua gói VIP" onBack={() => router.push("/(tabs)/profile")} />
+      <SubscriptionHistoryList />
     </SafeAreaView>
   );
 };
@@ -23,4 +23,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LikedByScreen;
+export default SubscriptionHistoryScreen;

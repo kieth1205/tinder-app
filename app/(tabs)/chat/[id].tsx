@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useContext } from 'react';
+import React, { useState, useCallback, useContext, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, Text, RefreshControl } from 'react-native';
 import { GiftedChat, IMessage, Send, Actions, Bubble } from 'react-native-gifted-chat';
 import { useLocalSearchParams } from 'expo-router';
@@ -9,44 +9,41 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import messageService from '@/services/messageService';
 import { AuthContext } from '@/context/AuthProvider';
+import { useQuery } from '@tanstack/react-query';
 
 export default function ChatDetail() {
   const router = useRouter();
   const { id, userId } = useLocalSearchParams();
   const { user } = useContext(AuthContext);
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const otherUserId = id as string;
   const currentUserId = user?.id || (userId as string);
 
-  const fetchMessages = async () => {
-    if (!currentUserId || !otherUserId) return;
-    
-    try {
-      setLoading(true);
+  // Sử dụng react-query để load tin nhắn với refresh interval 1 giây
+  const { isLoading, error, data, refetch } = useQuery({
+    queryKey: ['messages', currentUserId, otherUserId],
+    queryFn: async () => {
+      if (!currentUserId || !otherUserId) return [];
+      
       // Lấy tin nhắn và đánh dấu là đã đọc
       const chatMessages = await messageService.getConversation(currentUserId, otherUserId);
       
       // Đánh dấu tất cả tin nhắn từ người kia gửi đến là đã đọc
-      messageService.markAllAsRead(currentUserId, otherUserId);
+      await messageService.markAllAsRead(currentUserId, otherUserId);
       
       // Chuyển đổi sang định dạng GiftedChat
-      const formattedMessages = messageService.convertToGiftedChatMessages(chatMessages, currentUserId);
-      setMessages(formattedMessages);
-    } catch (err) {
-      console.error('Error fetching messages:', err);
-      setError('Không thể tải tin nhắn. Vui lòng thử lại sau.');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return messageService.convertToGiftedChatMessages(chatMessages, currentUserId);
+    },
+    // refetchInterval: 1000, // Refresh interval: 1 giây
+    enabled: !!currentUserId && !!otherUserId,
+  });
 
-  // Tải tin nhắn từ API
   useEffect(() => {
-    fetchMessages();
-  }, [currentUserId, otherUserId]);
+    if (data) {
+      setMessages(data);
+    }
+  }, [data]);
 
   // Gửi tin nhắn
   const onSend = useCallback(async (newMessages: IMessage[] = []) => {
@@ -63,11 +60,14 @@ export default function ChatDetail() {
         receiverId: otherUserId,
         content: messageContent
       });
+      
+      // Refresh lại danh sách tin nhắn sau khi gửi
+      refetch();
     } catch (err) {
       console.error('Error sending message:', err);
       // Có thể hiển thị thông báo lỗi nếu cần
     }
-  }, [currentUserId, otherUserId]);
+  }, [currentUserId, otherUserId, refetch]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -123,7 +123,7 @@ export default function ChatDetail() {
     />
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <AuthHeader onBack={() => router.push("/chat")} />
@@ -140,7 +140,7 @@ export default function ChatDetail() {
       <SafeAreaView style={styles.container}>
         <AuthHeader onBack={() => router.push("/chat")} />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>Không thể tải tin nhắn. Vui lòng thử lại sau.</Text>
         </View>
       </SafeAreaView>
     );
@@ -148,7 +148,7 @@ export default function ChatDetail() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchMessages();
+    await refetch();
     setRefreshing(false);
   };
 

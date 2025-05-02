@@ -8,12 +8,14 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Text } from "./Themed";
 
 interface AuthHeaderProps {
   onBack?: () => void;
   style?: StyleProp<ViewStyle>;
   leftIcon?: "arrow-back" | "close";
   rightComponent?: ReactNode;
+  title?: string;
 }
 
 export const AuthHeader = ({
@@ -21,6 +23,7 @@ export const AuthHeader = ({
   style,
   leftIcon = "arrow-back",
   rightComponent,
+  title,
 }: AuthHeaderProps) => {
   const router = useRouter();
 
@@ -41,6 +44,7 @@ export const AuthHeader = ({
       >
         <Ionicons name={leftIcon} size={28} color="gray" />
       </TouchableOpacity>
+      {title && <Text style={styles.title}>{title}</Text>}
       {rightComponent && rightComponent}
     </View>
   );
@@ -61,5 +65,12 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     tintColor: "#000",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: -20,
+    marginBottom: 5,
   },
 });

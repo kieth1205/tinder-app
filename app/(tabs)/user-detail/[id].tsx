@@ -8,8 +8,6 @@ import { useGetMatches } from '@/hooks/use-get-matches';
 import messageService from '@/services/messageService';
 import { AuthContext } from '@/context/AuthProvider';
 import useVipStatus from '@/hooks/useVipStatus';
-import DirectMessageButton from '@/components/DirectMessageButton';
-import DirectMessageModal from '@/components/features/vip/DirectMessageModal';
 
 export default function UserDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -20,8 +18,7 @@ export default function UserDetailScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [message, setMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
-  const { isVip } = useVipStatus();
-  const [directMessageModalVisible, setDirectMessageModalVisible] = useState(false);
+  const { isVip, refreshVipStatus } = useVipStatus();
 
   useEffect(() => {
     if (users && id) {
@@ -31,6 +28,10 @@ export default function UserDetailScreen() {
       }
     }
   }, [id, users]);
+
+  useEffect(() => {
+    refreshVipStatus();
+  }, []);
 
   if (isLoading) {
     return (
