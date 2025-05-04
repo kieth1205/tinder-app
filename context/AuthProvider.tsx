@@ -3,6 +3,7 @@ import { useContext, useState } from "react";
 import { router, useSegments } from "expo-router";
 import api, { getAuthToken, isAuthenticated, removeAuthToken, saveAuthTokens } from "@/services/api";
 import { Alert } from "react-native";
+import { updateUserLocation } from "@/hooks/use-get-matches";
 
 type User = {
   id: string;
@@ -90,19 +91,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       const response = await api.post('/auth/login', { email, password }, { requireAuth: false });
-      // const response = {
-      //   data: {
-      //     accessToken: "1",
-      //     refreshToken: "2",
-      //     user: {
-      //       id: "1",
-      //       email: "test@gmail.com",
-      //       name: "test",
-      //       avatar: "https://images.unsplash.com/photo-1506794778202-254834971119?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-      //       bio: "Funny"
-      //     }
-      //   }
-      // }
+
 
       if (response.data && response.data.accessToken && response.data.refreshToken && response.data.user) {
         // Lưu tokens
@@ -110,6 +99,15 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
         // Lưu thông tin người dùng trực tiếp từ response
         setUser(response.data.user);
+        
+        // Cập nhật vị trí người dùng sau khi đăng nhập thành công
+        try {
+          await updateUserLocation();
+        } catch (locationError) {
+          console.error("Error updating location after login:", locationError);
+          // Không hiển thị lỗi với người dùng vì đây không phải lỗi quan trọng
+        }
+        
         return true;
       } else {
         Alert.alert("Lỗi đăng nhập", "Tài khoản hoặc mật khẩu không đúng");
