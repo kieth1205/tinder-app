@@ -107,6 +107,15 @@ const Story = ({ name, stories, user }: IStoryProps) => {
                   
                   {user?.additionalInfo && (
                     <View style={styles.infoDetails}>
+                      {user.additionalInfo.distance && (
+                        <View style={styles.infoItem}>
+                          <Ionicons name="location-outline" size={16} color="#fff" />
+                          <Text style={styles.infoText}>
+                            {user.additionalInfo.distance} km
+                          </Text>
+                        </View>
+                      )}
+
                       {user.additionalInfo.education && (
                         <View style={styles.infoItem}>
                           <Ionicons name="school-outline" size={16} color="#fff" />

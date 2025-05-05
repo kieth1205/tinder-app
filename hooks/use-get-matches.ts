@@ -28,6 +28,7 @@ export const updateUserLocation = async (): Promise<boolean> => {
     try {
         const location = await locationService.getCurrentLocation();
         if (location) {
+            console.log("location", location)
             return await locationService.updateUserLocation(location);
         }
         return false;
