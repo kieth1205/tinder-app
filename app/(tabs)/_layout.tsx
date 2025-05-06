@@ -35,6 +35,14 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="interests/index"
+        options={{
+          title: "Interests",
+          tabBarIcon: ({ color }) => <TabBarIcon name="heart" color={color} activeIcon={null} inactiveIcon={null} />,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
         name="chat/index"
         options={{
           title: "Chat",
@@ -103,6 +111,13 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="search-settings"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="interests/matches"
         options={{
           href: null,
           headerShown: false,
