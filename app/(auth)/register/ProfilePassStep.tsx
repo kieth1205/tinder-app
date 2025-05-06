@@ -20,10 +20,9 @@ import { STEPS, TOTAL_STEPS } from "./_layout";
 import api from "@/services/api";
 
 const ProfilePassStep = () => {
-    const { registrationData, updateRegistrationData, resetRegistrationData } = useRegistration();
+    const { registrationData, updateRegistrationData } = useRegistration();
     const [isRegistering, setIsRegistering] = useState(false);
 
-    // Initialize state with values from context or empty
     const [password, setPassword] = useState<string>(registrationData.password || "");
     const [confirmPassword, setConfirmPassword] = useState<string>("");
     const [rawProfile, setRawProfile] = useState<string>(registrationData.rawProfile || "Tôi là một lập trình viên đam mê công nghệ. Tôi cũng yêu thích du lịch, khám phá những nền văn hóa mới để tìm cảm hứng và mở rộng tầm nhìn. Tôi thích đọc sách về kinh doanh và phát triển bản thân.");
@@ -57,7 +56,8 @@ const ProfilePassStep = () => {
             return;
         }
 
-        // Update context with selected values
+        setIsRegistering(true);
+
         updateRegistrationData('password', password);
         updateRegistrationData('rawProfile', rawProfile);
 
@@ -72,12 +72,12 @@ const ProfilePassStep = () => {
 
             console.log("res", res)
 
-            // Nếu thành công, chuyển đến màn hình SuccessStep
             router.push("/register/SuccessStep");
         } catch (error) {
-            // Nếu có lỗi, thông báo sẽ được hiển thị từ hàm handleRegister trong context
             console.error("Đăng ký thất bại:", error);
             Alert.alert("Lỗi", "Đăng ký thất bại" + error);
+        } finally {
+            setIsRegistering(false);
         }
     };
 

@@ -36,7 +36,7 @@ const fallbackData = [
 const alreadyRemoved: string[] = [];
 
 export default function TabOneScreen() {
-  const { data: matchesData, isLoading, error } = useGetMatches();
+  const { data: matchesData, isLoading, error, refetch } = useGetMatches();
 
   const [characters, setCharacters] = useState<any[]>([]);
   const [highlightedButton, setHighlightedButton] = useState<Direction | null>(null);
@@ -46,7 +46,8 @@ export default function TabOneScreen() {
   useFocusEffect(
     React.useCallback(() => {
       refreshVipStatus();
-    }, [refreshVipStatus])
+      refetch();  
+    }, [refreshVipStatus, refetch])
   );
 
   // Cập nhật danh sách người dùng khi matchesData thay đổi
