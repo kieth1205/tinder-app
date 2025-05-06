@@ -1,4 +1,5 @@
 export * from './options'
+export * from './gender'
 
 export type UserSuggestion = {
     id: string;

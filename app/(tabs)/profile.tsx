@@ -374,6 +374,16 @@ export default function ProfileScreen() {
               <Text style={styles.featureButtonText}>Lịch sử mua gói VIP</Text>
             </TouchableOpacity>
           </View>
+          
+          <View style={styles.vipFeatures}>
+            <TouchableOpacity
+              style={styles.featureButton}
+              onPress={() => router.push('/search-settings')}
+            >
+              <Ionicons name="options" size={20} color="#FF4D67" />
+              <Text style={styles.featureButtonText}>Thiết lập tìm kiếm</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Hồ sơ của tôi</Text>

@@ -17,10 +17,10 @@ export type LOOKING_FOR =
 
 export const MappingLookingFor: Record<LOOKING_FOR, string> = {
     "NGUOI_YEU": "Người yêu",
-    "HEN_HO_LAU_DAI": "Hẹn ho lâu dài",
+    "HEN_HO_LAU_DAI": "Hẹn hò lâu dài",
     "BAT_KI_DIEU_GI_CO_THE": "Bất kì điều gì có thể",
     "QUAN_HE_KHONG_RANG_BUOC": "Quan hệ không ràng buộc",
-    "NHUNG_NGUOI_BAN_MOI": "Nhưng người bạn mới",
+    "NHUNG_NGUOI_BAN_MOI": "Những người bạn mới",
     "CHUA_RO": "Chưa rõ"
 }
 
@@ -95,10 +95,10 @@ export type LOVE_LANGUAGE =
     | "THOI_GIAN_BEN_NHAU";
 
 export const MappingLoveLanguage: Record<LOVE_LANGUAGE, string> = {
-    NHUNG_HANH_DONG_TINH_TE: "Nhưng hành động tình tế",
-    NHUNG_MON_QUA: "Nhưng món qua",
-    NHUNG_CU_CHI_AU_YEM: "Nhưng cử chỉ yêu",
-    NHUNG_LOI_KHEN: "Nhưng lời khen",
+    NHUNG_HANH_DONG_TINH_TE: "Những hành động tình tế",
+    NHUNG_MON_QUA: "Những món qua",
+    NHUNG_CU_CHI_AU_YEM: "Những cử chỉ yêu",
+    NHUNG_LOI_KHEN: "Những lời khen",
     THOI_GIAN_BEN_NHAU: "Thời gian bên nhau"
 }
 
