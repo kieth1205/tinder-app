@@ -2,6 +2,7 @@ import api from "@/services/api";
 import { UserSuggestion } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import locationService from "@/services/locationService";
+import { getUsersByInterest } from "@/services/interestService";
 
 export const useGetMatches = () => {
     const query = useQuery({
@@ -36,4 +37,15 @@ export const updateUserLocation = async (): Promise<boolean> => {
         console.error('Error updating user location:', error);
         return false;
     }
+}
+
+export const useGetInterestMatches = (interestId: string) => {
+    const query = useQuery({
+        queryKey: ['interest-matches', interestId],
+        queryFn: async () => {
+            const response = await getUsersByInterest(interestId);
+            return response;
+        },
+    });
+    return query;
 }
