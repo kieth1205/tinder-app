@@ -16,12 +16,12 @@ const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, onAddMoney }) 
         <Text style={styles.balance}>{formatCurrency(balance)}</Text>
       </View>
       
-      {/* {onAddMoney && (
+      {onAddMoney && (
         <TouchableOpacity style={styles.addButton} onPress={onAddMoney}>
           <Ionicons name="add-circle-outline" size={18} color="#FF4D67" />
           <Text style={styles.addButtonText}>Nạp tiền</Text>
         </TouchableOpacity>
-      )} */}
+      )}
     </View>
   );
 };
@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 16,
+    marginLeft: 16
   },
   addButtonText: {
     color: '#FF4D67',

@@ -92,17 +92,23 @@ const VipPurchaseScreen = () => {
   const depositMoney = async (amount: number) => {
     try {
       setLoading(true);
-      const response = await vipService.depositMoney(amount);
-      
-      if (response.success) {
-        Alert.alert('Thành công', 'Bạn đã nạp tiền thành công!');
-        await fetchBalance();
-      } else {
-        Alert.alert('Lỗi', response.error || 'Không thể nạp tiền. Vui lòng thử lại sau.');
+      // 1. create order
+      const approvalUrl = await vipService.createPaypalOrder(amount);
+
+      console.log('approvalUrl', approvalUrl);
+
+      if (!approvalUrl) {
+        Alert.alert('Lỗi', 'Không tạo được phiên PayPal.');
+        return;
       }
+
+      // 2. Open WebView modal
+      router.push({
+        pathname: '/paypal-checkout',
+        params: { url: approvalUrl, amount }
+      });
     } catch (error) {
       Alert.alert('Lỗi', 'Đã xảy ra lỗi khi xử lý nạp tiền');
-      console.error('Lỗi khi nạp tiền:', error);
     } finally {
       setLoading(false);
     }

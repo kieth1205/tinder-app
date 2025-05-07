@@ -34,6 +34,10 @@ export interface PaymentResponse {
   amount: number;
 }
 
+export interface CreatePaypalOrderResponse {
+  approvalUrl: string;
+}
+
 export interface BalanceResponse {
   balance: number;
 }
@@ -311,6 +315,60 @@ class VipService {
     } catch (error) {
       console.error('Lỗi khi lấy lịch sử match:', error);
       return [];
+    }
+  }
+
+  /**
+   * Tạo PayPal order (lấy approval url)
+   */
+  async createPaypalOrder(amount: number): Promise<string | null> {
+    try {
+      const response = await api.post<CreatePaypalOrderResponse>(
+        '/payment/paypal/create-order',
+        { amount },
+        { requireAuth: true }
+      );
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      console.log('response.data', response.data);
+
+      return response.data?.approvalUrl || null;
+    } catch (error) {
+      console.error('Lỗi khi tạo PayPal order:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Capture PayPal order sau khi người dùng thanh toán thành công
+   */
+  async capturePaypalOrder(token: string): Promise<PaymentResponse> {
+    try {
+      const response = await api.post<PaymentResponse>(
+        '/payment/paypal/capture',
+        { token },
+        { requireAuth: true }
+      );
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      return {
+        success: true,
+        error: undefined,
+        amount: response?.data?.amount || 0,
+      };
+    } catch (error) {
+      console.error('Lỗi khi capture PayPal order:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định',
+        amount: 0,
+      };
     }
   }
 }
