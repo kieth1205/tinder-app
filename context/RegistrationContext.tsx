@@ -1,13 +1,11 @@
-import api from '@/services/api';
-import { ALCOHOL_CONSUMPTION, COMMUNICATION_STYLE, DIETARY_PREFERENCE, EDUCATION, EXERCISE_FREQUENCY, FUTURE_FAMILY, GENDER, INTEREST, LOOKING_FOR, LOVE_LANGUAGE, PETS, SLEEP_PATTERN, SMOKING_PREFERENCE, SOCIAL_MEDIA_USAGE, ZODIAC_SIGN } from '@/types';
+import { ALCOHOL_CONSUMPTION, COMMUNICATION_STYLE, DIETARY_PREFERENCE, EDUCATION, EXERCISE_FREQUENCY, GENDER, INTEREST, LOOKING_FOR, LOVE_LANGUAGE, PETS, SLEEP_PATTERN, SMOKING_PREFERENCE, SOCIAL_MEDIA_USAGE, ZODIAC_SIGN } from '@/types';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Alert } from 'react-native';
 
 // Define the shape of our registration data
 interface RegistrationData {
   email: string; // OK
   name: string; // OK
-  birthDate: string; // OK
+  birthday: string; // OK
   gender?: GENDER; // OK
   images: string[]; // OK
   shortVideo: string; // NOT OK
@@ -53,7 +51,7 @@ const RegistrationContext = createContext<RegistrationContextType | undefined>(u
 const initialRegistrationData: RegistrationData = {
   email: '',
   name: '',
-  birthDate: '',
+  birthday: '',
   images: [],
   shortVideo: '',
   password: '',

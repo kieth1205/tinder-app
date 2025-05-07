@@ -11,8 +11,8 @@ import useVipStatus from "@/hooks/useVipStatus";
 import { useFocusEffect } from "expo-router";
 
 // Map tinder-card directions to our API SwipeDirection enum
-type Direction = "left" | "right" | "up";
-const mapDirectionToSwipeDirection = (direction: Direction): SwipeDirection => {
+export type Direction = "left" | "right" | "up";
+export const mapDirectionToSwipeDirection = (direction: Direction): SwipeDirection => {
   switch (direction) {
     case "left": return SwipeDirection.LEFT;
     case "right": return SwipeDirection.RIGHT;
@@ -36,7 +36,7 @@ const fallbackData = [
 const alreadyRemoved: string[] = [];
 
 export default function TabOneScreen() {
-  const { data: matchesData, isLoading, error } = useGetMatches();
+  const { data: matchesData, isLoading, error, refetch } = useGetMatches();
 
   const [characters, setCharacters] = useState<any[]>([]);
   const [highlightedButton, setHighlightedButton] = useState<Direction | null>(null);
@@ -46,7 +46,8 @@ export default function TabOneScreen() {
   useFocusEffect(
     React.useCallback(() => {
       refreshVipStatus();
-    }, [refreshVipStatus])
+      refetch();
+    }, [refreshVipStatus, refetch])
   );
 
   // Cập nhật danh sách người dùng khi matchesData thay đổi
@@ -154,6 +155,27 @@ export default function TabOneScreen() {
     );
   }
 
+  const allSwiped = matchesData && matchesData.length > 0 && matchesData.every(character => alreadyRemoved.includes(character.name));
+  if (allSwiped) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="sad-outline" size={80} color="#ccc" />
+          <Text style={styles.emptyText}>Bạn đã quẹt hết tất cả người dùng</Text>
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={() => {
+              alreadyRemoved.length = 0;
+              refetch();
+            }}
+          >
+            <Text style={styles.refreshButtonText}>Tải lại</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.cardContainer}>
@@ -243,6 +265,20 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 18,
     color: "#888",
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+  refreshButton: {
+    marginTop: 20,
+    backgroundColor: "#FF6B6B",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+  },
+  refreshButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   header: {
     color: "#000",

@@ -1,4 +1,5 @@
 export * from './options'
+export * from './gender'
 
 export type UserSuggestion = {
     id: string;
@@ -21,5 +22,6 @@ export type UserSuggestion = {
       socialMediaActivity?: string;
       sleepHabit?: string;
       communicationStyle?: string;
+      distance?: string;
     };
 };

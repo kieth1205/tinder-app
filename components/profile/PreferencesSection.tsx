@@ -50,33 +50,6 @@ export default function PreferencesSection({
     },
   ];
 
-  const renderPicker = (
-      value: string, 
-      setValue: (value: string) => void, 
-      options: {id: string, label: string}[]
-    ) => (
-      <View style={styles.pickerContainer}>
-        {options.map((option) => (
-          <TouchableOpacity
-            key={option.id}
-            style={[
-              styles.pickerButton,
-              value === option.id && styles.pickerButtonSelected,
-            ]}
-            onPress={() => setValue(option.id)}
-          >
-            <Text
-              style={[
-                styles.pickerButtonText,
-                value === option.id && styles.pickerButtonTextSelected,
-              ]}
-            >{option.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
-
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Tùy chọn tìm kiếm</Text>
@@ -96,7 +69,7 @@ export default function PreferencesSection({
         )}
       </View>
       
-      <View style={styles.fieldContainer}>
+      {/* <View style={styles.fieldContainer}>
         <Text style={styles.fieldLabel}>Khoảng cách tối đa</Text>
         <View>
           {editMode ? (
@@ -123,7 +96,7 @@ export default function PreferencesSection({
             </Text>
           )}
         </View>
-      </View>
+      </View> */}
     </View>
   );
 }

@@ -1,7 +1,6 @@
 import React from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Link, Tabs } from "expo-router";
-import { Pressable } from "react-native";
+import { Tabs } from "expo-router";
 
 import Colors from "@/constants/Colors";
 import { useColorScheme } from "@/components/useColorScheme";
@@ -32,6 +31,14 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => <TabBarIcon name="fire" color={color} activeIcon={null} inactiveIcon={null} />,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="interests/index"
+        options={{
+          title: "Interests",
+          tabBarIcon: ({ color }) => <TabBarIcon name="heart" color={color} activeIcon={null} inactiveIcon={null} />,
           headerShown: false,
         }}
       />
@@ -97,6 +104,20 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="match-history"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="search-settings"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="interests/matches"
         options={{
           href: null,
           headerShown: false,

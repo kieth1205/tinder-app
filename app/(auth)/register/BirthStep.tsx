@@ -21,7 +21,7 @@ const BirthStep = () => {
   const router = useRouter();
 
   // Initialize local state with context value or empty string
-  const [date, setDate] = useState<string>(registrationData.birthDate || "");
+  const [date, setDate] = useState<string>(registrationData.birthday || "");
 
   const isValidAge = () => {
     if (!date) return false;
@@ -41,14 +41,14 @@ const BirthStep = () => {
     const day = parseInt(match[3]);
 
     // Tạo đối tượng Date với các giá trị đã được phân tích
-    const birthDate = new Date(year, month, day);
+    const birthday = new Date(year, month, day);
     const today = new Date();
 
     // Tính tuổi
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
+    let age = today.getFullYear() - birthday.getFullYear();
+    const monthDiff = today.getMonth() - birthday.getMonth();
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthday.getDate())) {
       age--;
     }
 
@@ -61,9 +61,11 @@ const BirthStep = () => {
   };
 
   const handleNext = () => {
-    updateRegistrationData('birthDate', date);
+    updateRegistrationData('birthday', date);
     router.push("/register/GenderStep");
   };
+
+  console.log("date", date)
 
   return (
     <SafeAreaView style={styles.container}>
