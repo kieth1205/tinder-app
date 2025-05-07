@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -25,10 +25,12 @@ import InterestsSection from '@/components/profile/InterestsSection';
 import PreferencesSection from '@/components/profile/PreferencesSection';
 import AboutSection from '@/components/profile/AboutSection';
 import LifestyleSection from '@/components/profile/LifestyleSection';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useVipStatus } from '../../hooks/useVipStatus';
 import VipBadge from '../../components/VipBadge';
 import { Ionicons } from '@expo/vector-icons';
+import BalanceDisplay from '@/components/BalanceDisplay';
+import vipService from '@/services/vipService';
 
 interface MediaItem {
   uri: string;
@@ -82,6 +84,19 @@ export default function ProfileScreen() {
 
   const { isVip, refreshVipStatus } = useVipStatus();
   const router = useRouter();
+
+  const [balance, setBalance] = useState<number>(0);
+
+  const fetchBalance = async () => {
+    const userBalance = await vipService.getBalance();
+    setBalance(userBalance);
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchBalance();
+    }, [fetchBalance])
+  );
 
   // Load user profile
   const loadProfile = async () => {
@@ -288,6 +303,45 @@ export default function ProfileScreen() {
     setImages(updatedImages);
   };
 
+  const handleAddMoney = () => {
+    // Điều hướng đến màn hình nạp tiền hoặc hiển thị modal
+    Alert.alert(
+      'Nạp tiền',
+      'Chọn số tiền bạn muốn nạp:',
+      [
+        { text: '100.000đ', onPress: () => depositMoney(100000) },
+        { text: '200.000đ', onPress: () => depositMoney(200000) },
+        { text: '500.000đ', onPress: () => depositMoney(500000) },
+        { text: 'Hủy', style: 'cancel' }
+      ]
+    );
+  };
+
+  const depositMoney = async (amount: number) => {
+    try {
+      setLoading(true);
+      // 1. create order
+      const approvalUrl = await vipService.createPaypalOrder(amount);
+
+      console.log('approvalUrl', approvalUrl);
+
+      if (!approvalUrl) {
+        Alert.alert('Lỗi', 'Không tạo được phiên PayPal.');
+        return;
+      }
+
+      // 2. Open WebView modal
+      router.push({
+        pathname: '/paypal-checkout',
+        params: { url: approvalUrl, amount }
+      });
+    } catch (error) {
+      Alert.alert('Lỗi', 'Đã xảy ra lỗi khi xử lý nạp tiền');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -334,6 +388,8 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </>
             )}
+
+            <BalanceDisplay balance={balance} onAddMoney={handleAddMoney} />
           </View>
 
           {/* Thêm các nút điều hướng đến màn hình VIP */}
@@ -374,7 +430,7 @@ export default function ProfileScreen() {
               <Text style={styles.featureButtonText}>Lịch sử mua gói VIP</Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.vipFeatures}>
             <TouchableOpacity
               style={styles.featureButton}
@@ -496,15 +552,15 @@ export default function ProfileScreen() {
 
           {/* Nút đăng xuất */}
           <View style={styles.logoutContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.logoutButton}
               onPress={() => {
                 Alert.alert(
                   'Đăng xuất',
                   'Bạn có chắc chắn muốn đăng xuất không?',
                   [
-                    {text: 'Hủy', style: 'cancel'},
-                    {text: 'Đăng xuất', style: 'destructive', onPress: logout}
+                    { text: 'Hủy', style: 'cancel' },
+                    { text: 'Đăng xuất', style: 'destructive', onPress: logout }
                   ]
                 );
               }}
