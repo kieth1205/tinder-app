@@ -138,7 +138,7 @@ const InterestMatchesScreen = () => {
   }, [interestId]);
 
   const handleGoBack = () => {
-    router.push('/(tabs)/interests');
+    router.push('/(tabs)/interests/index');
   };
 
   const allSwiped = matchesData && matchesData.length > 0 && matchesData.every(character => alreadyRemoved.includes(character.name));

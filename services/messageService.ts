@@ -34,6 +34,10 @@ export interface CreateMessageDto {
   content: string;
 }
 
+export interface CreateImageMessageDto extends CreateMessageDto {
+  type: 'image';
+}
+
 export interface StartConversationDto {
   receiverId: string;
   matchId?: string;
@@ -115,6 +119,48 @@ class MessageService {
     }
   }
 
+  async sendImageMessage(senderId: string, receiverId: string, imageUri: string, matchId?: string): Promise<Message | null> {
+    try {
+      // Prepare file object
+      const fileName = imageUri.split('/').pop() || `image_${Date.now()}.jpg`;
+      const file = { uri: imageUri, name: fileName, type: 'image/jpeg' } as any;
+
+      // Upload image to server
+      const uploadResponse = await api.upload<{ url: string }>(
+        '/upload/single',
+        [file],
+        { fieldName: 'file', requireAuth: true }
+      );
+
+      if (uploadResponse.error) {
+        throw new Error(uploadResponse.error);
+      }
+
+      const imageUrl = uploadResponse.data?.url;
+      if (!imageUrl) {
+        throw new Error('Không nhận được url ảnh sau khi upload');
+      }
+
+      // Gửi tin nhắn dạng ảnh (content là url tệp ảnh)
+      const dto: CreateImageMessageDto = {
+        senderId,
+        receiverId,
+        matchId,
+        content: imageUrl,
+        type: 'image',
+      };
+
+      const response = await api.post<Message>('/messages', dto, { requireAuth: true });
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error sending image message:', error);
+      return null;
+    }
+  }
+
   async markAsRead(messageId: string): Promise<void> {
     try {
       await api.patch(`/messages/${messageId}/read`, {}, {
@@ -175,17 +221,22 @@ class MessageService {
   }
 
   convertToGiftedChatMessages(messages: Message[], currentUserId: string) {
-    return messages.map(message => ({
-      _id: message.id,
-      text: message.content,
-      createdAt: new Date(message.timestamp),
-      user: {
-        _id: message.senderId,
-        name: message.senderId === currentUserId ? 'You' : 'Other User'
-      },
-      sent: true,
-      received: message.read,
-    }));
+    return messages.map(message => {
+      // Simple heuristic: nếu content trông giống url ảnh thì hiển thị dạng ảnh trong GiftedChat
+      const isImage = /\.(jpeg|jpg|png|gif)$/i.test(message.content);
+      return {
+        _id: message.id,
+        text: isImage ? '' : message.content,
+        image: isImage ? message.content : undefined,
+        createdAt: new Date(message.timestamp),
+        user: {
+          _id: message.senderId,
+          name: message.senderId === currentUserId ? 'You' : 'Other User'
+        },
+        sent: true,
+        received: message.read,
+      };
+    });
   }
 }
 

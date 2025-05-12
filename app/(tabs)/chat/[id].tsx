@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useContext, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, RefreshControl } from 'react-native';
-import { GiftedChat, IMessage, Send, Actions, Bubble } from 'react-native-gifted-chat';
+import { View, StyleSheet, ActivityIndicator, Text, RefreshControl, TouchableOpacity } from 'react-native';
+import { GiftedChat, IMessage, Send, Actions, Bubble, BubbleProps } from 'react-native-gifted-chat';
 import { useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as Speech from 'expo-speech';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { AuthHeader } from '@/components/AuthHeader';
 import { useRouter } from 'expo-router';
@@ -17,6 +18,7 @@ export default function ChatDetail() {
   const { user } = useContext(AuthContext);
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const otherUserId = id as string;
   const currentUserId = user?.id || (userId as string);
 
@@ -45,6 +47,37 @@ export default function ChatDetail() {
     }
   }, [data]);
 
+  // Cleanup function to stop speech when component unmounts
+  useEffect(() => {
+    return () => {
+      if (isSpeaking) {
+        Speech.stop();
+      }
+    };
+  }, [isSpeaking]);
+
+  // Text-to-speech function
+  const speakMessage = (text: string) => {
+    // Stop any ongoing speech
+    if (isSpeaking) {
+      Speech.stop();
+      setIsSpeaking(false);
+      return;
+    }
+
+    setIsSpeaking(true);
+    
+    const options = {
+      language: 'vi-VN', // Vietnamese language
+      pitch: 1.0,
+      rate: 0.9,
+      onDone: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    };
+
+    Speech.speak(text, options);
+  };
+
   // Gửi tin nhắn
   const onSend = useCallback(async (newMessages: IMessage[] = []) => {
     if (!currentUserId || !otherUserId || newMessages.length === 0) return;
@@ -70,23 +103,36 @@ export default function ChatDetail() {
   }, [currentUserId, otherUserId, refetch]);
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+      });
 
-    if (!result.canceled && result.assets[0]) {
-      const newMessage: IMessage = {
-        _id: Math.random().toString(),
-        text: '',
-        createdAt: new Date(),
-        image: result.assets[0].uri,
-        user: {
-          _id: 1,
-          name: 'User',
-        },
-      };
-      onSend([newMessage]);
+      if (!result.canceled && result.assets[0]) {
+        const uri = result.assets[0].uri;
+
+        // Hiển thị ngay ảnh vừa chọn
+        const optimisticMessage: IMessage = {
+          _id: Math.random().toString(),
+          text: '',
+          createdAt: new Date(),
+          image: uri,
+          user: {
+            _id: currentUserId,
+            name: 'You',
+          },
+        };
+        setMessages(prev => GiftedChat.append(prev, [optimisticMessage]));
+
+        // Gửi lên server
+        await messageService.sendImageMessage(currentUserId, otherUserId, uri);
+
+        // Refresh lại dữ liệu chat để lấy url ảnh từ server
+        refetch();
+      }
+    } catch (err) {
+      console.error('Error picking or sending image:', err);
     }
   };
 
@@ -109,19 +155,42 @@ export default function ChatDetail() {
     />
   );
 
-  const renderBubble = (props: any) => (
-    <Bubble
-      {...props}
-      wrapperStyle={{
-        right: {
-          backgroundColor: '#FF4C6D',
-        },
-        left: {
-          backgroundColor: '#f0f0f0',
-        },
-      }}
-    />
-  );
+  // Custom Bubble component with text-to-speech functionality
+  const renderBubble = (props: BubbleProps<IMessage>) => {
+    const { currentMessage } = props;
+    const messageText = currentMessage?.text || '';
+    
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Bubble
+          {...props}
+          wrapperStyle={{
+            right: {
+              backgroundColor: '#FF4C6D',
+            },
+            left: {
+              backgroundColor: '#f0f0f0',
+            },
+          }}
+        />
+        {messageText.length > 0 && (
+          <TouchableOpacity 
+            style={[
+              styles.speakButton, 
+              { alignSelf: props.position === 'right' ? 'flex-end' : 'flex-start' }
+            ]}
+            onPress={() => speakMessage(messageText)}
+          >
+            <FontAwesome 
+              name={isSpeaking ? "stop-circle" : "volume-up"} 
+              size={18} 
+              color="#555" 
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -162,7 +231,7 @@ export default function ChatDetail() {
           _id: currentUserId,
         }}
         placeholder="Nhập tin nhắn..."
-        // renderActions={renderActions}
+        renderActions={renderActions}
         renderSend={renderSend}
         renderBubble={renderBubble}
         locale="vi"
@@ -207,5 +276,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FF4C6D',
     textAlign: 'center',
+  },
+  speakButton: {
+    marginHorizontal: 5,
+    padding: 5,
   },
 });
