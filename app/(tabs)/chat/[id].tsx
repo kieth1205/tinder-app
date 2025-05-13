@@ -96,8 +96,8 @@ export default function ChatDetail() {
       
       // Refresh lại danh sách tin nhắn sau khi gửi
       refetch();
-    } catch (err) {
-      console.error('Error sending message:', err);
+    } catch (err: any) {
+      console.error('Error sending message:', err.message);
       // Có thể hiển thị thông báo lỗi nếu cần
     }
   }, [currentUserId, otherUserId, refetch]);
@@ -143,7 +143,9 @@ export default function ChatDetail() {
         'Chọn ảnh từ thư viện': pickImage,
       }}
       icon={() => (
-        <FontAwesome name="image" size={24} color="#2196F3" />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <FontAwesome name="image" size={24} color="#2196F3" />
+        </View>
       )}
     />
   );
@@ -157,9 +159,6 @@ export default function ChatDetail() {
 
   // Custom Bubble component with text-to-speech functionality
   const renderBubble = (props: BubbleProps<IMessage>) => {
-    const { currentMessage } = props;
-    const messageText = currentMessage?.text || '';
-    
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Bubble
@@ -173,21 +172,6 @@ export default function ChatDetail() {
             },
           }}
         />
-        {messageText.length > 0 && (
-          <TouchableOpacity 
-            style={[
-              styles.speakButton, 
-              { alignSelf: props.position === 'right' ? 'flex-end' : 'flex-start' }
-            ]}
-            onPress={() => speakMessage(messageText)}
-          >
-            <FontAwesome 
-              name={isSpeaking ? "stop-circle" : "volume-up"} 
-              size={18} 
-              color="#555" 
-            />
-          </TouchableOpacity>
-        )}
       </View>
     );
   };
