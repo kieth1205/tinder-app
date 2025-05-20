@@ -10,6 +10,8 @@ export interface Message {
   content: string;
   timestamp: Date;
   read: boolean;
+  messageType?: 'TEXT' | 'IMAGE';
+  imageUrl?: string;
 }
 
 export interface UserInfo {
@@ -34,8 +36,9 @@ export interface CreateMessageDto {
   content: string;
 }
 
-export interface CreateImageMessageDto extends CreateMessageDto {
-  type: 'IMAGE';
+export interface CreateImageMessageDto extends Omit<CreateMessageDto, 'content'> {
+  messageType: 'IMAGE';
+  imageUrl: string;
 }
 
 export interface StartConversationDto {
@@ -141,8 +144,8 @@ class MessageService {
         senderId,
         receiverId,
         matchId,
-        content: imageUrl,
-        type: 'IMAGE',
+        imageUrl,
+        messageType: 'IMAGE',
       };
 
       console.log("Sending image message to API", dto);
@@ -224,11 +227,11 @@ class MessageService {
   convertToGiftedChatMessages(messages: Message[], currentUserId: string) {
     return messages.map(message => {
       // Simple heuristic: nếu content trông giống url ảnh thì hiển thị dạng ảnh trong GiftedChat
-      const isImage = /\.(jpeg|jpg|png|gif)$/i.test(message.content);
+      const isImage = message.messageType === 'IMAGE';
       return {
         _id: message.id,
         text: isImage ? '' : message.content,
-        image: isImage ? message.content : undefined,
+        image: isImage ? message.imageUrl : undefined,
         createdAt: new Date(message.timestamp),
         user: {
           _id: message.senderId,

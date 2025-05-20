@@ -3,7 +3,6 @@ import { View, StyleSheet, ActivityIndicator, Text, RefreshControl, Platform } f
 import { GiftedChat, IMessage, Send, Actions, Bubble, BubbleProps } from 'react-native-gifted-chat';
 import { useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import * as Speech from 'expo-speech';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { AuthHeader } from '@/components/AuthHeader';
 import { useRouter } from 'expo-router';
@@ -49,15 +48,6 @@ export default function ChatDetail() {
       setMessages(data);
     }
   }, [data]);
-
-  // Cleanup function to stop speech when component unmounts
-  useEffect(() => {
-    return () => {
-      if (isSpeaking) {
-        Speech.stop();
-      }
-    };
-  }, [isSpeaking]);
 
   // Gửi tin nhắn
   const onSend = useCallback(async (newMessages: IMessage[] = []) => {
@@ -142,7 +132,7 @@ export default function ChatDetail() {
         const body = JSON.parse(uploadResult.body)
         const imageUrl = body?.url as string;
         await messageService.sendImageMessage(currentUserId, otherUserId, imageUrl);
-        // refetch();
+        refetch();
       }
     } catch (err) {
       console.error('Error picking or sending image:', err);
