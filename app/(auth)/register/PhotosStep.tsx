@@ -18,7 +18,7 @@
   import api, { API_BASE_URL } from "@/services/api";
   import * as FileSystem from 'expo-file-system'
 
-  interface MediaItem {
+  export interface MediaItem {
     uri: string;
     type: string;
     name: string;

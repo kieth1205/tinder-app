@@ -1,6 +1,9 @@
-import api from './api';
+import { MediaItem } from '@/app/(auth)/register/PhotosStep';
+import api, { API_BASE_URL } from './api';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import * as FileSystem from 'expo-file-system'
+import { Platform } from 'react-native';
 
 export interface Message {
   id: string;
@@ -50,11 +53,11 @@ class MessageService {
       const response = await api.get<ConversationInfo[]>('/messages/mine-conversations', {
         requireAuth: true
       });
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       return response.data || [];
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -67,11 +70,11 @@ class MessageService {
       const response = await api.get<Message[]>(`/messages/conversation?userId=${userId}&otherUserId=${otherUserId}`, {
         requireAuth: true
       });
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       return response.data || [];
     } catch (error) {
       console.error('Error fetching conversation:', error);
@@ -84,18 +87,18 @@ class MessageService {
       const response = await api.post<Message>('/messages', message, {
         requireAuth: true
       });
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       return response.data;
     } catch (error) {
       console.error('Error sending message:', error);
       return null;
     }
   }
-  
+
   async startConversation(receiverId: string, content: string, matchId?: string): Promise<Message | null> {
     try {
       const dto: StartConversationDto = {
@@ -103,15 +106,15 @@ class MessageService {
         content,
         matchId
       };
-      
+
       const response = await api.post<Message>('/messages/start-conversation', dto, {
         requireAuth: true
       });
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       return response.data;
     } catch (error) {
       console.error('Error starting conversation:', error);
@@ -119,29 +122,59 @@ class MessageService {
     }
   }
 
-  async sendImageMessage(senderId: string, receiverId: string, imageUri: string, matchId?: string): Promise<Message | null> {
+  async sendImageMessage(senderId: string, receiverId: string, mediaItem: MediaItem, matchId?: string): Promise<Message | null> {
     try {
-      // Prepare file object
-      const fileName = imageUri.split('/').pop() || `image_${Date.now()}.jpg`;
-      const file = { uri: imageUri, name: fileName, type: 'image/jpeg' } as any;
+      console.log("Start send image message", { senderId, receiverId, matchId });
 
-      // Upload image to server
-      const uploadResponse = await api.upload<{ url: string }>(
-        '/upload/single',
-        [file],
-        { fieldName: 'file', requireAuth: true }
-      );
-
-      if (uploadResponse.error) {
-        throw new Error(uploadResponse.error);
+      // Validate inputs
+      if (!senderId || !receiverId || !mediaItem) {
+        console.error('Missing required parameters for sending image message');
+        return null;
       }
 
-      const imageUrl = uploadResponse.data?.url;
+      let uri = mediaItem.uri;
+      if (Platform.OS === 'android' && !uri.startsWith('file://')) {
+        uri = mediaItem.uri;
+      } else if (Platform.OS === 'ios') {
+        uri = mediaItem.uri.replace('file://', '');
+      }
+
+      // Extract filename from URI or generate a unique one
+      const fileName = uri.split('/').pop() || `image_${Date.now()}.jpg`;
+      const fileType = uri.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+
+      console.log("Preparing to upload file", { uri, fileName, fileType });
+      console.log(API_BASE_URL + '/upload/single')
+
+
+      // Upload image to server
+      const uploadResult = await FileSystem.uploadAsync(
+        API_BASE_URL + '/upload/single',
+        uri,
+        {
+          httpMethod: 'POST',
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          fieldName: 'file',
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
+        }
+      );
+
+      // Parse response and extract image URL
+      if (!uploadResult.body) {
+        throw new Error('Upload response is empty');
+      }
+
+      const body = JSON.parse(uploadResult.body);
+      const imageUrl = body?.url;
+      console.log("Image uploaded successfully", { imageUrl });
+
       if (!imageUrl) {
         throw new Error('Không nhận được url ảnh sau khi upload');
       }
 
-      // Gửi tin nhắn dạng ảnh (content là url tệp ảnh)
+      // Create message DTO with the image URL as content
       const dto: CreateImageMessageDto = {
         senderId,
         receiverId,
@@ -150,13 +183,20 @@ class MessageService {
         type: 'image',
       };
 
+      console.log("Sending image message to API", dto);
+
+      // Send the message to the API
       const response = await api.post<Message>('/messages', dto, { requireAuth: true });
+
       if (response.error) {
         throw new Error(response.error);
       }
+
+      console.log("Image message sent successfully", { messageId: response.data?.id });
       return response.data;
-    } catch (error) {
-      console.error('Error sending image message:', error);
+    } catch (error: any) {
+      console.error('Error sending image message:', JSON.stringify(error));
+      // You might want to add analytics tracking for errors here
       return null;
     }
   }
@@ -186,11 +226,11 @@ class MessageService {
       const response = await api.get<{ count: number }>(`/messages/unread-count?userId=${userId}`, {
         requireAuth: true
       });
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       return response.data?.count || 0;
     } catch (error) {
       console.error('Error fetching unread count:', error);
@@ -200,11 +240,11 @@ class MessageService {
 
   formatMessageTime(date: Date | string): string {
     if (!date) return '';
-    
+
     const messageDate = typeof date === 'string' ? new Date(date) : date;
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) {
       return 'Vừa xong';
     } else if (diffInMinutes < 60) {

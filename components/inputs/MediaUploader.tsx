@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity, ActivityIndicator, ScrollView, Dimensions, Alert } from 'react-native';
+import { StyleSheet, View, Image, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Video } from 'expo-av';
 import { MaterialIcons } from '@expo/vector-icons';

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useContext, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Text, RefreshControl } from 'react-native';
 import { GiftedChat, IMessage, Send, Actions, Bubble, BubbleProps } from 'react-native-gifted-chat';
 import { useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import messageService from '@/services/messageService';
 import { AuthContext } from '@/context/AuthProvider';
 import { useQuery } from '@tanstack/react-query';
+import { MediaItem } from '@/app/(auth)/register/PhotosStep';
 
 export default function ChatDetail() {
   const router = useRouter();
@@ -27,13 +28,13 @@ export default function ChatDetail() {
     queryKey: ['messages', currentUserId, otherUserId],
     queryFn: async () => {
       if (!currentUserId || !otherUserId) return [];
-      
+
       // Lấy tin nhắn và đánh dấu là đã đọc
       const chatMessages = await messageService.getConversation(currentUserId, otherUserId);
-      
+
       // Đánh dấu tất cả tin nhắn từ người kia gửi đến là đã đọc
       await messageService.markAllAsRead(currentUserId, otherUserId);
-      
+
       // Chuyển đổi sang định dạng GiftedChat
       return messageService.convertToGiftedChatMessages(chatMessages, currentUserId);
     },
@@ -56,36 +57,14 @@ export default function ChatDetail() {
     };
   }, [isSpeaking]);
 
-  // Text-to-speech function
-  const speakMessage = (text: string) => {
-    // Stop any ongoing speech
-    if (isSpeaking) {
-      Speech.stop();
-      setIsSpeaking(false);
-      return;
-    }
-
-    setIsSpeaking(true);
-    
-    const options = {
-      language: 'vi-VN', // Vietnamese language
-      pitch: 1.0,
-      rate: 0.9,
-      onDone: () => setIsSpeaking(false),
-      onError: () => setIsSpeaking(false),
-    };
-
-    Speech.speak(text, options);
-  };
-
   // Gửi tin nhắn
   const onSend = useCallback(async (newMessages: IMessage[] = []) => {
     if (!currentUserId || !otherUserId || newMessages.length === 0) return;
-    
+
     try {
       // Hiển thị tin nhắn trên UI ngay lập tức
       setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages));
-      
+
       // Gửi tin nhắn lên server
       const messageContent = newMessages[0].text;
       await messageService.sendMessage({
@@ -93,7 +72,7 @@ export default function ChatDetail() {
         receiverId: otherUserId,
         content: messageContent
       });
-      
+
       // Refresh lại danh sách tin nhắn sau khi gửi
       refetch();
     } catch (err: any) {
@@ -104,20 +83,29 @@ export default function ChatDetail() {
 
   const pickImage = async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 1,
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
       });
 
-      if (!result.canceled && result.assets[0]) {
-        const uri = result.assets[0].uri;
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const newMedia: MediaItem = {
+          uri: asset.uri,
+          type: 'image',
+          name: asset.uri.split('/').pop() || `image-${Date.now()}.jpg`,
+          width: asset.width,
+          height: asset.height,
+          fileSize: asset.fileSize,
+        };
 
         // Hiển thị ngay ảnh vừa chọn
         const optimisticMessage: IMessage = {
           _id: Math.random().toString(),
           text: '',
           createdAt: new Date(),
-          image: uri,
+          image: newMedia.uri,
           user: {
             _id: currentUserId,
             name: 'You',
@@ -126,7 +114,7 @@ export default function ChatDetail() {
         setMessages(prev => GiftedChat.append(prev, [optimisticMessage]));
 
         // Gửi lên server
-        await messageService.sendImageMessage(currentUserId, otherUserId, uri);
+        await messageService.sendImageMessage(currentUserId, otherUserId, newMedia);
 
         // Refresh lại dữ liệu chat để lấy url ảnh từ server
         refetch();

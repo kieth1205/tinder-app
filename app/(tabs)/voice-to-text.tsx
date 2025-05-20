@@ -3,11 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
+import { API_BASE_URL } from '@/services/api';
 
 // API Key cho AssemblyAI
 const API_KEY = '4b5ac35c91ac4377805b3f25505be51b';
 // API Endpoints
-const ASSEMBLYAI_UPLOAD_URL = 'https://api.assemblyai.com/v2/upload';
 const ASSEMBLYAI_TRANSCRIPT_URL = 'https://api.assemblyai.com/v2/transcript';
 
 export default function App() {
@@ -26,11 +26,11 @@ export default function App() {
     const getPermissions = async () => {
       try {
         console.log('Kiểm tra quyền truy cập microphone...');
-        
+
         // Kiểm tra trạng thái quyền hiện tại
         const permissionResponse = await Audio.getPermissionsAsync();
         console.log('Trạng thái quyền hiện tại:', permissionResponse.status);
-        
+
         if (permissionResponse.status === 'granted') {
           // Đã có quyền từ trước
           console.log('Đã có quyền truy cập microphone');
@@ -41,7 +41,7 @@ export default function App() {
           console.log('Yêu cầu quyền truy cập microphone...');
           const { status } = await Audio.requestPermissionsAsync();
           console.log('Kết quả yêu cầu quyền:', status);
-          
+
           if (status === 'granted') {
             console.log('Đã được cấp quyền microphone');
             setAudioPermission(true);
@@ -53,22 +53,22 @@ export default function App() {
               'Cần quyền truy cập',
               'Ứng dụng cần quyền truy cập microphone để thu âm. Bạn có muốn mở cài đặt để cấp quyền không?',
               [
-                { 
-                  text: 'Mở Cài đặt', 
+                {
+                  text: 'Mở Cài đặt',
                   onPress: () => {
                     if (Platform.OS === 'ios') {
                       Linking.openURL('app-settings:');
                     } else {
                       Linking.openSettings();
                     }
-                  } 
+                  }
                 },
                 { text: 'Để sau' }
               ]
             );
           }
         }
-        
+
         // Cài đặt âm thanh cho thu âm (nếu có quyền)
         if (permissionResponse.status === 'granted') {
           await Audio.setAudioModeAsync({
@@ -83,18 +83,18 @@ export default function App() {
         Alert.alert('Lỗi', 'Không thể xin quyền truy cập microphone');
       }
     };
-  
+
     getPermissions();
-    
+
     // Cleanup khi component unmount
     return () => {
       if (recording) {
-        recording.stopAndUnloadAsync().catch(error => 
+        recording.stopAndUnloadAsync().catch(error =>
           console.log('Lỗi khi dừng recording:', error)
         );
       }
       if (soundObject) {
-        soundObject.unloadAsync().catch(error => 
+        soundObject.unloadAsync().catch(error =>
           console.log('Lỗi khi unload sound:', error)
         );
       }
@@ -107,26 +107,26 @@ export default function App() {
       if (!audioPermission) {
         // Nếu chưa có quyền, yêu cầu lại
         const permissionCheck = await Audio.getPermissionsAsync();
-        
+
         if (permissionCheck.status !== 'granted') {
           const { status } = await Audio.requestPermissionsAsync();
           setAudioPermission(status === 'granted');
-          
+
           if (status !== 'granted') {
             Alert.alert(
-              'Cần quyền truy cập', 
+              'Cần quyền truy cập',
               'Vui lòng cấp quyền sử dụng microphone để thu âm',
               [
                 { text: 'Hủy' },
-                { 
-                  text: 'Mở Cài đặt', 
+                {
+                  text: 'Mở Cài đặt',
                   onPress: () => {
                     if (Platform.OS === 'ios') {
                       Linking.openURL('app-settings:');
                     } else {
                       Linking.openSettings();
                     }
-                  } 
+                  }
                 }
               ]
             );
@@ -143,13 +143,13 @@ export default function App() {
         shouldDuckAndroid: true,
         playThroughEarpieceAndroid: false,
       });
-      
+
       // Xóa bản ghi âm cũ nếu có
       if (recording) {
         await recording.stopAndUnloadAsync();
         setRecording(null);
       }
-      
+
       // Cài đặt cấu hình thu âm
       const recordingOptions: Audio.RecordingOptions = {
         android: {
@@ -181,7 +181,7 @@ export default function App() {
       const newRecording = new Audio.Recording();
       await newRecording.prepareToRecordAsync(recordingOptions);
       await newRecording.startAsync();
-      
+
       setRecording(newRecording);
       setRecordingStatus('recording');
       console.log('Đang thu âm...');
@@ -197,14 +197,14 @@ export default function App() {
         console.log('Không có bản ghi âm để dừng');
         return;
       }
-      
+
       console.log('Dừng thu âm...');
       setRecordingStatus('stopping');
-      
+
       // Dừng bản ghi âm
       await recording.stopAndUnloadAsync();
       setRecordingStatus('stopped');
-      
+
       // Lấy URI của file âm thanh
       const uri = recording.getURI();
       if (!uri) {
@@ -212,14 +212,29 @@ export default function App() {
       }
       console.log('File âm thanh đã được lưu tại:', uri);
       setAudioUri(uri);
-      
+
       // Tạo đối tượng Sound để phát lại âm thanh
       const { sound } = await Audio.Sound.createAsync({ uri });
       setSoundObject(sound);
-      
+
+      const uploadResult = await FileSystem.uploadAsync(
+        API_BASE_URL + '/upload/single',
+        uri,
+        {
+          httpMethod: 'POST',
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          fieldName: 'file',
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
+        }
+      );
+
+      const body = JSON.parse(uploadResult.body)
+
       // Tiến hành chuyển đổi âm thanh thành văn bản
-      await transcribeAudio(uri);
-      
+      await transcribeAudio(body?.url);
+
       setRecording(null);
     } catch (error) {
       console.log('Lỗi dừng thu âm:', error);
@@ -230,6 +245,8 @@ export default function App() {
   };
 
   const transcribeAudio = async (audioUri: string) => {
+    console.log("audioUri", audioUri)
+
     if (!audioUri) {
       console.log('Không có URI âm thanh để chuyển đổi');
       return;
@@ -252,31 +269,13 @@ export default function App() {
         throw new Error('File âm thanh không tồn tại');
       }
       console.log('Thông tin file:', fileInfo);
-      
+
       // Sử dụng API mới của AssemblyAI để upload
       console.log('Bắt đầu upload audio tới AssemblyAI...');
-      
-      // Đọc nội dung file
-    //   const fileContent = await FileSystem.readAsStringAsync(audioUri, {
-    //     encoding: FileSystem.EncodingType.Base64
-    //   });
-    //   console.log(`Đã đọc file, kích thước: ${fileContent.length} bytes`);
-      
-    //   // Tạo Blob từ base64
-    //   const response = await fetch(`data:audio/m4a;base64,${fileContent}`);
-    //   const blob = await response.blob();
-      
-    //   // Gửi trực tiếp blob với content-type chính xác
-    //   const uploadResponse = await axios.post(ASSEMBLYAI_UPLOAD_URL, blob, {
-    //     headers: {
-    //       authorization: API_KEY,
-    //       'Content-Type': 'audio/m4a'
-    //     },
-    //   });
 
-    // Chuyển thành upload file audio lên firebase
+      // Chuyển thành upload file audio lên firebase
 
-    //   const audioUrl = uploadResponse.data.upload_url;
+      //   const audioUrl = uploadResponse.data.upload_url;
       const audioUrl = 'https://firebasestorage.googleapis.com/v0/b/file-storage-6ac01.appspot.com/o/tinder%2Ftest.m4a?alt=media&token=27a2f30d-3411-4e6d-83c3-7c98f0bb4ba8';
       console.log('Đã upload file, audioUrl:', audioUrl);
 
@@ -337,12 +336,12 @@ export default function App() {
           Alert.alert('Thông báo', 'Không có bản ghi âm để phát');
           return;
         }
-        
+
         // Tạo sound object mới từ URI
         const { sound } = await Audio.Sound.createAsync({ uri: audioUri });
         setSoundObject(sound);
         await sound.playAsync();
-        
+
         // Thêm lắng nghe sự kiện kết thúc phát
         sound.setOnPlaybackStatusUpdate((status) => {
           if (status.isLoaded && status.didJustFinish) {
@@ -377,19 +376,19 @@ export default function App() {
             {recordingStatus === 'recording' ? 'Dừng Thu âm' : 'Bắt đầu Thu âm'}
           </Text>
         </TouchableOpacity>
-        
+
         <Text style={styles.statusText}>
-          {recordingStatus === 'recording' 
-            ? 'Đang thu âm...' 
+          {recordingStatus === 'recording'
+            ? 'Đang thu âm...'
             : recordingStatus === 'stopping'
               ? 'Đang dừng thu âm...'
-              : recordingStatus === 'stopped' 
-                ? 'Thu âm đã dừng' 
+              : recordingStatus === 'stopped'
+                ? 'Thu âm đã dừng'
                 : 'Nhấn nút để bắt đầu thu âm'}
         </Text>
-        
+
         {audioUri && recordingStatus === 'stopped' && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.playButton}
             onPress={playRecording}
           >
@@ -400,7 +399,7 @@ export default function App() {
 
       <View style={styles.transcriptionContainer}>
         <Text style={styles.transcriptionTitle}>Văn bản đã nhận dạng:</Text>
-        
+
         {isTranscribing ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#0074D9" />
