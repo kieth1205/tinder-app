@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useContext, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, RefreshControl } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Text, RefreshControl, Platform } from 'react-native';
 import { GiftedChat, IMessage, Send, Actions, Bubble, BubbleProps } from 'react-native-gifted-chat';
 import { useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -12,6 +12,8 @@ import messageService from '@/services/messageService';
 import { AuthContext } from '@/context/AuthProvider';
 import { useQuery } from '@tanstack/react-query';
 import { MediaItem } from '@/app/(auth)/register/PhotosStep';
+import * as FileSystem from 'expo-file-system'
+import { API_BASE_URL } from '@/services/api';
 
 export default function ChatDetail() {
   const router = useRouter();
@@ -83,7 +85,8 @@ export default function ChatDetail() {
 
   const pickImage = async () => {
     try {
-      const result = await ImagePicker.launchCameraAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -113,11 +116,33 @@ export default function ChatDetail() {
         };
         setMessages(prev => GiftedChat.append(prev, [optimisticMessage]));
 
-        // Gửi lên server
-        await messageService.sendImageMessage(currentUserId, otherUserId, newMedia);
+        // Xử lý URI cho Android (content:// URI) và iOS
+        let uri = newMedia.uri;
+        if (Platform.OS === 'android' && !uri.startsWith('file://')) {
+          // Giữ nguyên content:// URI cho Android
+          uri = newMedia.uri;
+        } else if (Platform.OS === 'ios') {
+          // Xử lý cho iOS nếu cần
+          uri = newMedia.uri.replace('file://', '');
+        }
 
-        // Refresh lại dữ liệu chat để lấy url ảnh từ server
-        refetch();
+        const uploadResult = await FileSystem.uploadAsync(
+          API_BASE_URL + '/upload/single',
+          uri,
+          {
+            httpMethod: 'POST',
+            uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+            fieldName: 'file',
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            }
+          }
+        );
+
+        const body = JSON.parse(uploadResult.body)
+        const imageUrl = body?.url as string;
+        await messageService.sendImageMessage(currentUserId, otherUserId, imageUrl);
+        // refetch();
       }
     } catch (err) {
       console.error('Error picking or sending image:', err);
