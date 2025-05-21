@@ -190,7 +190,10 @@ export default function TabOneScreen() {
             }}
             onSwipeRequirementUnfulfilled={() => setHighlightedButton(null)} // Đặt lại nếu vuốt bị hủy
           >
-            <TinderCardCustom character={character} />
+            <TinderCardCustom
+              character={character}
+              overlayDirection={index === characters.length - 1 ? highlightedButton : null}
+            />
           </TinderCard>
         ))}
       </View>
