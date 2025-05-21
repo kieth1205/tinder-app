@@ -20,6 +20,8 @@ export default function App() {
   const [soundObject, setSoundObject] = useState<Audio.Sound | null>(null);
   const [audioUri, setAudioUri] = useState('');
   const [transcriptionId, setTranscriptionId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     // Xin quyền truy cập microphone khi app khởi chạy
@@ -153,7 +155,7 @@ export default function App() {
       // Cài đặt cấu hình thu âm
       const recordingOptions: Audio.RecordingOptions = {
         android: {
-          extension: '.m4a',
+          extension: '.wav',
           outputFormat: Audio.AndroidOutputFormat.MPEG_4,
           audioEncoder: Audio.AndroidAudioEncoder.AAC,
           sampleRate: 44100,
@@ -161,7 +163,7 @@ export default function App() {
           bitRate: 128000,
         },
         ios: {
-          extension: '.m4a',
+          extension: '.wav',
           audioQuality: Audio.IOSAudioQuality.HIGH,
           sampleRate: 44100,
           numberOfChannels: 2,
@@ -191,6 +193,61 @@ export default function App() {
     }
   };
 
+  const uploadToServer = async (fileUri: string) => {
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      console.log('Bắt đầu upload file lên server...', fileUri);
+
+      // Tạo tên file dựa trên timestamp
+      const fileName = `audio_${Date.now()}.wav`;
+
+      // Sử dụng FileSystem.uploadAsync để upload file lên API endpoint
+      const uploadResult = await FileSystem.uploadAsync(
+        `${API_BASE_URL}/upload/audio`, // Endpoint của API upload
+        fileUri,
+        {
+          httpMethod: 'POST',
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          fieldName: 'audio', // Phải khớp với tên field trong @UseInterceptors(FileInterceptor('audio'))
+          mimeType: 'audio/wav', // Định dạng MIME của file audio
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          parameters: {
+            fileName: fileName
+          }
+        }
+      );
+
+      if (uploadResult.status >= 200 && uploadResult.status < 300) {
+        try {
+          const responseData = JSON.parse(uploadResult.body);
+
+          if (responseData && responseData.url) {
+            console.log('Upload thành công, URL:', responseData.url);
+            setUploadProgress(100);
+            setIsUploading(false);
+            return responseData.url;
+          } else {
+            throw new Error('Response không chứa URL');
+          }
+        } catch (parseError) {
+          console.error('Lỗi phân tích response:', parseError);
+          console.log('Response body:', uploadResult.body);
+          throw new Error('Không thể phân tích response từ server');
+        }
+      } else {
+        throw new Error(`Upload thất bại với status code: ${uploadResult.status}`);
+      }
+    } catch (error) {
+      console.error('Lỗi upload file lên server:', error);
+      setIsUploading(false);
+      Alert.alert('Thông báo', 'Không thể upload file âm thanh lên server');
+      throw error;
+    }
+  };
+
   const stopRecording = async () => {
     try {
       if (!recording) {
@@ -201,11 +258,9 @@ export default function App() {
       console.log('Dừng thu âm...');
       setRecordingStatus('stopping');
 
-      // Dừng bản ghi âm
       await recording.stopAndUnloadAsync();
       setRecordingStatus('stopped');
 
-      // Lấy URI của file âm thanh
       const uri = recording.getURI();
       if (!uri) {
         throw new Error('Không thể lấy URI của bản ghi âm');
@@ -213,27 +268,16 @@ export default function App() {
       console.log('File âm thanh đã được lưu tại:', uri);
       setAudioUri(uri);
 
-      // Tạo đối tượng Sound để phát lại âm thanh
       const { sound } = await Audio.Sound.createAsync({ uri });
       setSoundObject(sound);
 
-      const uploadResult = await FileSystem.uploadAsync(
-        API_BASE_URL + '/upload/single',
-        uri,
-        {
-          httpMethod: 'POST',
-          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-          fieldName: 'file',
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          }
-        }
-      );
-
-      const body = JSON.parse(uploadResult.body)
-
-      // Tiến hành chuyển đổi âm thanh thành văn bản
-      await transcribeAudio(body?.url);
+      try {
+        const downloadURL = await uploadToServer(uri);
+        await transcribeAudio(downloadURL);
+      } catch (error) {
+        console.error('Lỗi trong quá trình xử lý sau khi thu âm:', error);
+        Alert.alert('Thông báo', 'Có lỗi xảy ra khi xử lý file âm thanh');
+      }
 
       setRecording(null);
     } catch (error) {
@@ -244,11 +288,11 @@ export default function App() {
     }
   };
 
-  const transcribeAudio = async (audioUri: string) => {
-    console.log("audioUri", audioUri)
+  const transcribeAudio = async (audioUrl: string) => {
+    console.log("Bắt đầu transcribe với URL:", audioUrl);
 
-    if (!audioUri) {
-      console.log('Không có URI âm thanh để chuyển đổi');
+    if (!audioUrl) {
+      console.log('Không có URL âm thanh để chuyển đổi');
       return;
     }
 
@@ -263,23 +307,8 @@ export default function App() {
 
     setIsTranscribing(true);
     try {
-      // Kiểm tra file tồn tại
-      const fileInfo = await FileSystem.getInfoAsync(audioUri);
-      if (!fileInfo.exists) {
-        throw new Error('File âm thanh không tồn tại');
-      }
-      console.log('Thông tin file:', fileInfo);
+      console.log('Bắt đầu gửi yêu cầu chuyển đổi đến AssemblyAI...');
 
-      // Sử dụng API mới của AssemblyAI để upload
-      console.log('Bắt đầu upload audio tới AssemblyAI...');
-
-      // Chuyển thành upload file audio lên firebase
-
-      //   const audioUrl = uploadResponse.data.upload_url;
-      const audioUrl = 'https://firebasestorage.googleapis.com/v0/b/file-storage-6ac01.appspot.com/o/tinder%2Ftest.m4a?alt=media&token=27a2f30d-3411-4e6d-83c3-7c98f0bb4ba8';
-      console.log('Đã upload file, audioUrl:', audioUrl);
-
-      // Tạo transcript với audio_url và ngôn ngữ tiếng Việt
       const transcriptResponse = await axios.post(
         ASSEMBLYAI_TRANSCRIPT_URL,
         {
@@ -328,7 +357,6 @@ export default function App() {
     }
   };
 
-  // Hàm phát lại âm thanh đã ghi
   const playRecording = async () => {
     try {
       if (!soundObject) {
@@ -386,6 +414,13 @@ export default function App() {
                 ? 'Thu âm đã dừng'
                 : 'Nhấn nút để bắt đầu thu âm'}
         </Text>
+
+        {isUploading && (
+          <View style={styles.uploadingContainer}>
+            <ActivityIndicator size="small" color="#0074D9" />
+            <Text style={styles.uploadingText}>Đang tải lên: {uploadProgress}%</Text>
+          </View>
+        )}
 
         {audioUri && recordingStatus === 'stopped' && (
           <TouchableOpacity
@@ -464,6 +499,16 @@ const styles = StyleSheet.create({
   statusText: {
     marginTop: 20,
     fontSize: 16,
+    color: '#555',
+  },
+  uploadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  uploadingText: {
+    marginLeft: 10,
+    fontSize: 14,
     color: '#555',
   },
   playButton: {
