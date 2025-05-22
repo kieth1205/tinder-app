@@ -1,4 +1,4 @@
-import api from './api';
+import api, { API_BASE_URL } from './api';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -10,6 +10,8 @@ export interface Message {
   content: string;
   timestamp: Date;
   read: boolean;
+  messageType?: 'TEXT' | 'IMAGE';
+  imageUrl?: string;
 }
 
 export interface UserInfo {
@@ -34,6 +36,11 @@ export interface CreateMessageDto {
   content: string;
 }
 
+export interface CreateImageMessageDto extends Omit<CreateMessageDto, 'content'> {
+  messageType: 'IMAGE';
+  imageUrl: string;
+}
+
 export interface StartConversationDto {
   receiverId: string;
   matchId?: string;
@@ -46,11 +53,11 @@ class MessageService {
       const response = await api.get<ConversationInfo[]>('/messages/mine-conversations', {
         requireAuth: true
       });
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       return response.data || [];
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -63,11 +70,11 @@ class MessageService {
       const response = await api.get<Message[]>(`/messages/conversation?userId=${userId}&otherUserId=${otherUserId}`, {
         requireAuth: true
       });
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       return response.data || [];
     } catch (error) {
       console.error('Error fetching conversation:', error);
@@ -80,18 +87,18 @@ class MessageService {
       const response = await api.post<Message>('/messages', message, {
         requireAuth: true
       });
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       return response.data;
     } catch (error) {
       console.error('Error sending message:', error);
       return null;
     }
   }
-  
+
   async startConversation(receiverId: string, content: string, matchId?: string): Promise<Message | null> {
     try {
       const dto: StartConversationDto = {
@@ -99,18 +106,61 @@ class MessageService {
         content,
         matchId
       };
-      
+
       const response = await api.post<Message>('/messages/start-conversation', dto, {
         requireAuth: true
       });
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       return response.data;
     } catch (error) {
       console.error('Error starting conversation:', error);
+      return null;
+    }
+  }
+
+  async sendImageMessage(senderId: string, receiverId: string, imageUrl: string, matchId?: string): Promise<Message | null> {
+    try {
+      console.log("Start send image message", { senderId, receiverId, matchId });
+
+      // Validate inputs
+      if (!senderId || !receiverId || !imageUrl) {
+        console.error('Missing required parameters for sending image message');
+        return null;
+      }
+
+      console.log("Preparing to upload file", { imageUrl });
+      console.log(API_BASE_URL + '/upload/single')
+
+      if (!imageUrl) {
+        throw new Error('Không nhận được url ảnh sau khi upload');
+      }
+
+      // Create message DTO with the image URL as content
+      const dto: CreateImageMessageDto = {
+        senderId,
+        receiverId,
+        matchId,
+        imageUrl,
+        messageType: 'IMAGE',
+      };
+
+      console.log("Sending image message to API", dto);
+
+      // Send the message to the API
+      const response = await api.post<Message>('/messages', dto, { requireAuth: true });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      console.log("Image message sent successfully", { messageId: response.data?.id });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error sending image message:', error.message);
       return null;
     }
   }
@@ -140,11 +190,11 @@ class MessageService {
       const response = await api.get<{ count: number }>(`/messages/unread-count?userId=${userId}`, {
         requireAuth: true
       });
-      
+
       if (response.error) {
         throw new Error(response.error);
       }
-      
+
       return response.data?.count || 0;
     } catch (error) {
       console.error('Error fetching unread count:', error);
@@ -154,11 +204,11 @@ class MessageService {
 
   formatMessageTime(date: Date | string): string {
     if (!date) return '';
-    
+
     const messageDate = typeof date === 'string' ? new Date(date) : date;
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) {
       return 'Vừa xong';
     } else if (diffInMinutes < 60) {
@@ -175,17 +225,22 @@ class MessageService {
   }
 
   convertToGiftedChatMessages(messages: Message[], currentUserId: string) {
-    return messages.map(message => ({
-      _id: message.id,
-      text: message.content,
-      createdAt: new Date(message.timestamp),
-      user: {
-        _id: message.senderId,
-        name: message.senderId === currentUserId ? 'You' : 'Other User'
-      },
-      sent: true,
-      received: message.read,
-    }));
+    return messages.map(message => {
+      // Simple heuristic: nếu content trông giống url ảnh thì hiển thị dạng ảnh trong GiftedChat
+      const isImage = message.messageType === 'IMAGE';
+      return {
+        _id: message.id,
+        text: isImage ? '' : message.content,
+        image: isImage ? message.imageUrl : undefined,
+        createdAt: new Date(message.timestamp),
+        user: {
+          _id: message.senderId,
+          name: message.senderId === currentUserId ? 'You' : 'Other User'
+        },
+        sent: true,
+        received: message.read,
+      };
+    });
   }
 }
 

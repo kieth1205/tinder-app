@@ -1,92 +1,27 @@
-import React, { useState, useCallback, useContext, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, RefreshControl, Platform, Alert, Linking, Modal, TouchableOpacity, ScrollView } from 'react-native';
-import { GiftedChat, IMessage, Send, Actions, Bubble, BubbleProps } from 'react-native-gifted-chat';
-import { useLocalSearchParams } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { AuthHeader } from '@/components/AuthHeader';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import messageService from '@/services/messageService';
-import { AuthContext } from '@/context/AuthProvider';
-import { useQuery } from '@tanstack/react-query';
-import { MediaItem } from '@/app/(auth)/register/PhotosStep';
-import * as FileSystem from 'expo-file-system'
-import { API_BASE_URL } from '@/services/api';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Platform, Linking } from 'react-native';
 import { Audio } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
+import { API_BASE_URL } from '@/services/api';
 
+// API Key cho AssemblyAI
 const API_KEY = '4b5ac35c91ac4377805b3f25505be51b';
+// API Endpoints
 const ASSEMBLYAI_TRANSCRIPT_URL = 'https://api.assemblyai.com/v2/transcript';
 
-export default function ChatDetail() {
-  const router = useRouter();
-  const { id, userId } = useLocalSearchParams();
-  const { user } = useContext(AuthContext);
-  const [messages, setMessages] = useState<IMessage[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
+export default function App() {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording' | 'stopping' | 'stopped'>('idle');
   const [audioPermission, setAudioPermission] = useState(false);
   const [speechPermission, setSpeechPermission] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
-  const [voiceModalVisible, setVoiceModalVisible] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [soundObject, setSoundObject] = useState<Audio.Sound | null>(null);
+  const [audioUri, setAudioUri] = useState('');
+  const [transcriptionId, setTranscriptionId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [currentMessage, setCurrentMessage] = useState('111');
-
-  const otherUserId = id as string;
-  const currentUserId = user?.id || (userId as string);
-
-  // Sử dụng react-query để load tin nhắn với refresh interval 1 giây
-  const { isLoading, error, data, refetch } = useQuery({
-    queryKey: ['messages', currentUserId, otherUserId],
-    queryFn: async () => {
-      if (!currentUserId || !otherUserId) return [];
-
-      // Lấy tin nhắn và đánh dấu là đã đọc
-      const chatMessages = await messageService.getConversation(currentUserId, otherUserId);
-
-      // Đánh dấu tất cả tin nhắn từ người kia gửi đến là đã đọc
-      await messageService.markAllAsRead(currentUserId, otherUserId);
-
-      // Chuyển đổi sang định dạng GiftedChat
-      return messageService.convertToGiftedChatMessages(chatMessages, currentUserId);
-    },
-    // refetchInterval: 1000, // Refresh interval: 1 giây
-    enabled: !!currentUserId && !!otherUserId,
-  });
-
-  useEffect(() => {
-    if (data) {
-      setMessages(data);
-    }
-  }, [data]);
-
-  // Gửi tin nhắn
-  const onSend = useCallback(async (newMessages: IMessage[] = []) => {
-    if (!currentUserId || !otherUserId || newMessages.length === 0) return;
-
-    try {
-      // Hiển thị tin nhắn trên UI ngay lập tức
-      setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages));
-
-      // Gửi tin nhắn lên server
-      const messageContent = newMessages[0].text;
-      await messageService.sendMessage({
-        senderId: currentUserId,
-        receiverId: otherUserId,
-        content: messageContent
-      });
-
-      // Refresh lại danh sách tin nhắn sau khi gửi
-      refetch();
-    } catch (err: any) {
-      console.error('Error sending message:', err.message);
-      // Có thể hiển thị thông báo lỗi nếu cần
-    }
-  }, [currentUserId, otherUserId, refetch]);
 
   useEffect(() => {
     // Xin quyền truy cập microphone khi app khởi chạy
@@ -160,74 +95,13 @@ export default function ChatDetail() {
           console.log('Lỗi khi dừng recording:', error)
         );
       }
+      if (soundObject) {
+        soundObject.unloadAsync().catch(error =>
+          console.log('Lỗi khi unload sound:', error)
+        );
+      }
     };
   }, []);
-
-  const pickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        const newMedia: MediaItem = {
-          uri: asset.uri,
-          type: 'image',
-          name: asset.uri.split('/').pop() || `image-${Date.now()}.jpg`,
-          width: asset.width,
-          height: asset.height,
-          fileSize: asset.fileSize,
-        };
-
-        // Hiển thị ngay ảnh vừa chọn
-        const optimisticMessage: IMessage = {
-          _id: Math.random().toString(),
-          text: '',
-          createdAt: new Date(),
-          image: newMedia.uri,
-          user: {
-            _id: currentUserId,
-            name: 'You',
-          },
-        };
-        setMessages(prev => GiftedChat.append(prev, [optimisticMessage]));
-
-        // Xử lý URI cho Android (content:// URI) và iOS
-        let uri = newMedia.uri;
-        if (Platform.OS === 'android' && !uri.startsWith('file://')) {
-          // Giữ nguyên content:// URI cho Android
-          uri = newMedia.uri;
-        } else if (Platform.OS === 'ios') {
-          // Xử lý cho iOS nếu cần
-          uri = newMedia.uri.replace('file://', '');
-        }
-
-        const uploadResult = await FileSystem.uploadAsync(
-          API_BASE_URL + '/upload/single',
-          uri,
-          {
-            httpMethod: 'POST',
-            uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-            fieldName: 'file',
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            }
-          }
-        );
-
-        const body = JSON.parse(uploadResult.body)
-        const imageUrl = body?.url as string;
-        await messageService.sendImageMessage(currentUserId, otherUserId, imageUrl);
-        refetch();
-      }
-    } catch (err) {
-      console.error('Error picking or sending image:', err);
-    }
-  };
 
   const startRecording = async () => {
     try {
@@ -371,8 +245,6 @@ export default function ChatDetail() {
       setIsUploading(false);
       Alert.alert('Thông báo', 'Không thể upload file âm thanh lên server');
       throw error;
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -394,6 +266,10 @@ export default function ChatDetail() {
         throw new Error('Không thể lấy URI của bản ghi âm');
       }
       console.log('File âm thanh đã được lưu tại:', uri);
+      setAudioUri(uri);
+
+      const { sound } = await Audio.Sound.createAsync({ uri });
+      setSoundObject(sound);
 
       try {
         const downloadURL = await uploadToServer(uri);
@@ -407,10 +283,8 @@ export default function ChatDetail() {
     } catch (error) {
       console.log('Lỗi dừng thu âm:', error);
       Alert.alert('Lỗi', 'Không thể dừng thu âm');
-    } finally {
       setRecordingStatus('idle');
       setRecording(null);
-      setVoiceModalVisible(false);
     }
   };
 
@@ -450,6 +324,7 @@ export default function ChatDetail() {
       );
 
       const transcriptId = transcriptResponse.data.id as string;
+      setTranscriptionId(transcriptId);
       console.log('Tạo transcript id:', transcriptId);
 
       // 3. Poll kết quả
@@ -470,9 +345,7 @@ export default function ChatDetail() {
         }
         if (status === 'completed') {
           const text = pollingRes.data.text ?? '';
-          const _transcribedText = text || 'Không phát hiện nội dung giọng nói nào.';
-          setTranscribedText(_transcribedText);
-          setCurrentMessage(_transcribedText);
+          setTranscribedText(text || 'Không phát hiện nội dung giọng nói nào.');
         }
       }
     } catch (error) {
@@ -483,214 +356,124 @@ export default function ChatDetail() {
       setIsTranscribing(false);
     }
   };
-  
-  const pickVoice = () => {
-    setVoiceModalVisible(true);
-  }
 
-  const renderActions = (props: any) => (
-    <>
-      <Actions
-        {...props}
-        options={{
-          'Chọn ảnh từ thư viện': pickImage,
-        }}
-        icon={() => (
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <FontAwesome name="image" size={24} color="#2196F3" />
-          </View>
-        )}
-      />
-      <Actions
-        {...props}
-        options={{
-          'Ghi âm': pickVoice,
-        }}
-        icon={() => (
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <FontAwesome name="microphone" size={24} color="#2196F3" />
-          </View>
-        )}
-      />
-    </>
-  );
+  const playRecording = async () => {
+    try {
+      if (!soundObject) {
+        if (!audioUri) {
+          Alert.alert('Thông báo', 'Không có bản ghi âm để phát');
+          return;
+        }
 
-  const renderSend = (props: any) => (
-    <Send
-      {...props}
-      label="Gửi"
-    />
-  );
+        // Tạo sound object mới từ URI
+        const { sound } = await Audio.Sound.createAsync({ uri: audioUri });
+        setSoundObject(sound);
+        await sound.playAsync();
 
-  // Custom Bubble component with text-to-speech functionality
-  const renderBubble = (props: BubbleProps<IMessage>) => {
-    return (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Bubble
-          {...props}
-          wrapperStyle={{
-            right: {
-              backgroundColor: '#FF4C6D',
-            },
-            left: {
-              backgroundColor: '#f0f0f0',
-            },
-          }}
-        />
-      </View>
-    );
-  };
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <AuthHeader onBack={() => router.push("/chat")} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF4C6D" />
-          <Text style={styles.loadingText}>Đang tải tin nhắn...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (error) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <AuthHeader onBack={() => router.push("/chat")} />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Không thể tải tin nhắn. Vui lòng thử lại sau.</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
+        // Thêm lắng nghe sự kiện kết thúc phát
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            console.log('Phát âm thanh kết thúc');
+          }
+        });
+      } else {
+        await soundObject.playFromPositionAsync(0);
+      }
+    } catch (error) {
+      console.log('Lỗi phát lại âm thanh:', error);
+      Alert.alert('Lỗi', 'Không thể phát lại âm thanh');
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <AuthHeader onBack={() => router.push("/chat")} />
-      <GiftedChat
-        messages={messages}
-        onSend={messages => onSend(messages)}
-        user={{
-          _id: currentUserId,
-        }}
-        text={currentMessage}
-        onInputTextChanged={setCurrentMessage}
-        placeholder="Nhập tin nhắn..."
-        renderActions={renderActions}
-        renderSend={renderSend}
-        renderBubble={renderBubble}
-        locale="vi"
-        timeFormat="HH:mm"
-        dateFormat="DD/MM/YYYY"
-        renderUsernameOnMessage
-        alwaysShowSend
-        isTyping={false}
-        renderChatFooter={() => null}
-        listViewProps={{
-          refreshControl: (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          ),
-        }}
-      />
+    <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.title}>Ứng dụng Chuyển đổi Giọng nói sang Văn bản</Text>
+        <Text style={styles.subtitle}>Thu âm giọng nói của bạn để chuyển thành văn bản</Text>
+      </View>
 
-      {/* Voice to Text Modal */}
-      <Modal
-        visible={voiceModalVisible}
-        animationType="slide"
-        onRequestClose={() => setVoiceModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.recordButtonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.recordButton,
-                { backgroundColor: recordingStatus === 'recording' ? '#FF4C6D' : '#2196F3' },
-              ]}
-              onPress={() => {
-                if (recordingStatus === 'recording') {
-                  stopRecording();
-                } else {
-                  startRecording();
-                }
-              }}
-            >
-              {recordingStatus === 'recording' ? (
-                <FontAwesome name="stop" size={48} color="#fff" />
-              ) : (
-                <FontAwesome name="microphone" size={48} color="#fff" />
-              )}
-            </TouchableOpacity>
-            <Text style={styles.statusText}>
-              {recordingStatus === 'recording'
-                ? 'Đang thu âm...'
-                : ''}
-            </Text>
+      <View style={styles.recordButtonContainer}>
+        <TouchableOpacity
+          style={[
+            styles.recordButton,
+            { backgroundColor: recordingStatus === 'recording' ? '#FF4136' : '#0074D9' }
+          ]}
+          onPress={recordingStatus === 'recording' ? stopRecording : startRecording}
+        >
+          <Text style={styles.recordButtonText}>
+            {recordingStatus === 'recording' ? 'Dừng Thu âm' : 'Bắt đầu Thu âm'}
+          </Text>
+        </TouchableOpacity>
 
-            {isTranscribing && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FF4C6D" />
-                <Text style={styles.loadingText}>Đang chuyển đổi âm thanh...</Text>
-              </View>
-            )}
+        <Text style={styles.statusText}>
+          {recordingStatus === 'recording'
+            ? 'Đang thu âm...'
+            : recordingStatus === 'stopping'
+              ? 'Đang dừng thu âm...'
+              : recordingStatus === 'stopped'
+                ? 'Thu âm đã dừng'
+                : 'Nhấn nút để bắt đầu thu âm'}
+        </Text>
 
-            {isUploading && uploadProgress < 100 && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FF4C6D" />
-                <Text style={styles.loadingText}>{uploadProgress}%</Text>
-              </View>
-            )}
+        {isUploading && (
+          <View style={styles.uploadingContainer}>
+            <ActivityIndicator size="small" color="#0074D9" />
+            <Text style={styles.uploadingText}>Đang tải lên: {uploadProgress}%</Text>
           </View>
+        )}
 
-          <TouchableOpacity style={styles.closeButton} onPress={() => setVoiceModalVisible(false)}>
-            <Text style={styles.closeButtonText}>Đóng</Text>
+        {audioUri && recordingStatus === 'stopped' && (
+          <TouchableOpacity
+            style={styles.playButton}
+            onPress={playRecording}
+          >
+            <Text style={styles.playButtonText}>Phát lại thu âm</Text>
           </TouchableOpacity>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        )}
+      </View>
+
+      <View style={styles.transcriptionContainer}>
+        <Text style={styles.transcriptionTitle}>Văn bản đã nhận dạng:</Text>
+
+        {isTranscribing ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#0074D9" />
+            <Text style={styles.loadingText}>Đang chuyển đổi âm thanh...</Text>
+          </View>
+        ) : (
+          <ScrollView style={styles.transcriptionBox}>
+            <Text style={styles.transcriptionText}>
+              {transcribedText || "Văn bản nhận dạng sẽ hiện tại đây sau khi thu âm."}
+            </Text>
+          </ScrollView>
+        )}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#FF4C6D',
-    textAlign: 'center',
-  },
-  speakButton: {
-    marginHorizontal: 5,
-    padding: 5,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F5',
     padding: 20,
     paddingTop: 60,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
   },
   recordButtonContainer: {
     alignItems: 'center',
@@ -708,14 +491,62 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  recordButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
   statusText: {
     marginTop: 20,
     fontSize: 16,
     color: '#555',
   },
+  uploadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  uploadingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#555',
+  },
+  playButton: {
+    marginTop: 15,
+    backgroundColor: '#2ECC40',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  playButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  transcriptionContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  transcriptionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#333',
+  },
   transcriptionBox: {
-    width: '100%',
-    height: 200,
+    flex: 1,
     borderWidth: 1,
     borderColor: '#DDD',
     borderRadius: 6,
@@ -727,16 +558,14 @@ const styles = StyleSheet.create({
     color: '#444',
     lineHeight: 24,
   },
-  closeButton: {
-    backgroundColor: '#FF4C6D',
-    paddingVertical: 12,
-    borderRadius: 25,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 'auto',
   },
-  closeButtonText: {
-    color: '#fff',
+  loadingText: {
+    marginTop: 10,
     fontSize: 16,
-    fontWeight: '600',
+    color: '#666',
   },
 });
