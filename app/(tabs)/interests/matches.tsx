@@ -19,6 +19,7 @@ const InterestMatchesScreen = () => {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const { interestId } = route.params as { interestId: string };
+  const [swipeOverlayDirection, setSwipeOverlayDirection] = useState<Direction | null>(null);
 
   const [interest, setInterest] = useState<any>(null);
 
@@ -36,14 +37,12 @@ const InterestMatchesScreen = () => {
     }, [refreshVipStatus, refetch])
   );
 
-  // Cập nhật danh sách người dùng khi matchesData thay đổi
   useEffect(() => {
     if (matchesData) {
       setCharacters(matchesData);
     }
   }, [matchesData]);
 
-  // Tạo refs dựa trên số lượng người dùng
   const childRefs = useMemo(() => {
     return Array(characters.length)
       .fill(0)
@@ -51,7 +50,6 @@ const InterestMatchesScreen = () => {
   }, [characters.length]);
 
   const swiped = async (direction: Direction, nameToDelete: string) => {
-    // Kiểm tra nếu người dùng không phải VIP và đang cố gắng super like
     if (direction === "up" && !isVip) {
       Alert.alert(
         "Tính năng dành cho VIP",
@@ -62,17 +60,17 @@ const InterestMatchesScreen = () => {
     }
 
     alreadyRemoved.push(nameToDelete);
-    setHighlightedButton(direction); // Highlight button based on swipe direction
+    setHighlightedButton(direction);
 
-    // Tìm người dùng có tên này để lấy ID
+    setSwipeOverlayDirection(direction);
+    setTimeout(() => setSwipeOverlayDirection(null), 800);
+
     const user = characters.find((character) => character.name === nameToDelete);
     if (user && user.id) {
       try {
-        // Gọi API swipe với hướng vuốt tương ứng
         const apiDirection = mapDirectionToSwipeDirection(direction);
         const response = await swipeService.createSwipe(user.id, apiDirection);
 
-        // Nếu có match thì hiển thị thông báo
         if (response.match) {
           Alert.alert(
             "Đã Match! 🎉",
@@ -94,7 +92,6 @@ const InterestMatchesScreen = () => {
   };
 
   const swipe = (dir: Direction) => {
-    // Kiểm tra nếu người dùng không phải VIP và đang cố gắng super like
     if (dir === "up" && !isVip) {
       Alert.alert(
         "Tính năng dành cho VIP",
@@ -118,16 +115,13 @@ const InterestMatchesScreen = () => {
   };
 
   const onSwipeWillStart = (dir: Direction) => {
-    // Kiểm tra nếu người dùng không phải VIP và đang cố gắng super like
     if (dir === "up" && !isVip) {
-      // Không cập nhật highlightedButton cho super like nếu không phải VIP
       return;
     }
     setHighlightedButton(dir);
   };
 
   useEffect(() => {
-    // Tìm kiếm thông tin sở thích từ danh sách để hiển thị tiêu đề
     for (const category of CATEGORIES) {
       const found = category.interests.find(item => item.id === interestId);
       if (found) {
@@ -138,7 +132,7 @@ const InterestMatchesScreen = () => {
   }, [interestId]);
 
   const handleGoBack = () => {
-    router.push('/(tabs)/interests/index');
+    router.push('/(tabs)/interests');
   };
 
   const allSwiped = matchesData && matchesData.length > 0 && matchesData.every(character => alreadyRemoved.includes(character.name));
@@ -163,9 +157,66 @@ const InterestMatchesScreen = () => {
     );
   }
 
+  const renderOverlayLabel = () => {
+      if (!swipeOverlayDirection) return null;
+  
+      let label = "";
+      let borderColor = "#2ECC71";
+      let rotation = "-20deg";
+      let labelPosition: any = { top: 200, left: 20 };
+      let tintColor = "rgba(46, 204, 113, 0.15)";
+  
+      switch (swipeOverlayDirection) {
+        case "right":
+          label = "LIKE";
+          borderColor = "#2ECC71";
+          rotation = "-20deg";
+          labelPosition = { top: 200, left: 20 };
+          tintColor = "rgba(46, 204, 113, 0.15)";
+          break;
+        case "left":
+          label = "NOPE";
+          borderColor = "#FF6B6B";
+          rotation = "20deg";
+          labelPosition = { top: 200, right: 20 };
+          tintColor = "rgba(255, 107, 107, 0.15)";
+          break;
+        case "up":
+          label = "SUPER LIKE";
+          borderColor = "#3498DB";
+          rotation = "0deg";
+          labelPosition = { top: 200, alignSelf: "center" };
+          tintColor = "rgba(52, 152, 219, 0.15)";
+          break;
+      }
+  
+      return (
+        <>
+          {/* Tinted overlay */}
+          <View style={[styles.overlayTint, { backgroundColor: tintColor }]} />
+          {/* Label */}
+          <View
+            style={[
+              styles.overlayLabel,
+              labelPosition,
+              {
+                borderColor,
+                transform: [{ rotate: rotation }],
+              },
+            ]}
+          >
+            <Text style={[styles.overlayText, { color: borderColor }]}>{label}</Text>
+          </View>
+        </>
+      );
+    };
+
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
+      {swipeOverlayDirection && (
+        renderOverlayLabel()
+      )}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -217,7 +268,7 @@ const InterestMatchesScreen = () => {
                 }}
                 onSwipeRequirementUnfulfilled={() => setHighlightedButton(null)} // Đặt lại nếu vuốt bị hủy
               >
-                <TinderCardCustom character={character} />
+                <TinderCardCustom character={character} interestId={interestId} />
               </TinderCard>
             ))}
           </View>
@@ -465,6 +516,47 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 5,
   },
+    // Full screen overlay shown briefly after a swipe
+    swipeOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 500,
+    },
+    swipeOverlayText: {
+      fontSize: 42,
+      fontWeight: "bold",
+      textShadowColor: "rgba(0, 0, 0, 0.3)",
+      textShadowOffset: { width: 1, height: 1 },
+      textShadowRadius: 2,
+    },
+    overlayLabel: {
+      position: "absolute",
+      borderWidth: 4,
+      paddingVertical: 8,
+      paddingHorizontal: 18,
+      borderRadius: 12,
+      zIndex: 210,
+      backgroundColor: "rgba(0,0,0,0.0)",
+    },
+    overlayText: {
+      fontSize: 38,
+      fontWeight: "bold",
+      textShadowColor: "rgba(0, 0, 0, 0.3)",
+      textShadowOffset: { width: 1, height: 1 },
+      textShadowRadius: 2,
+    },
+    overlayTint: {
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+      borderRadius: 20,
+      zIndex: 200,
+    },
 });
 
 export default InterestMatchesScreen;
