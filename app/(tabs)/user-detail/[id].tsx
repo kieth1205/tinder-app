@@ -4,15 +4,18 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
 import { ALCOHOL_CONSUMPTION, COMMUNICATION_STYLE, DIETARY_PREFERENCE, EDUCATION, EXERCISE_FREQUENCY, GENDER, INTEREST, LOOKING_FOR, LOVE_LANGUAGE, MappingAlcoholConsumption, MappingCommunicationStyle, MappingDietaryPreference, MappingEducation, MappingExercise, MappingGender, MappingInterest, MappingLookingFor, MappingLoveLanguage, MappingPets, MappingSleepPattern, MappingSmokingPreference, MappingSocialMediaUsage, MappingZodiacSign, PETS, SLEEP_PATTERN, SMOKING_PREFERENCE, SOCIAL_MEDIA_USAGE, UserSuggestion, ZODIAC_SIGN } from '@/types';
-import { useGetMatches } from '@/hooks/use-get-matches';
+import { useGetInterestMatches, useGetMatches } from '@/hooks/use-get-matches';
 import messageService from '@/services/messageService';
 import { AuthContext } from '@/context/AuthProvider';
 import useVipStatus from '@/hooks/useVipStatus';
 
 export default function UserDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, interestId } = useLocalSearchParams<{ id: string, interestId?: string }>();
   const router = useRouter();
+  
   const { data: users, isLoading } = useGetMatches();
+  const { data: usersInterest, isLoading: isLoadingMatches } = useGetInterestMatches(interestId);
+  
   const [user, setUser] = useState<UserSuggestion | null>(null);
   const { user: currentUser } = useContext(AuthContext);
   const [modalVisible, setModalVisible] = useState(false);
@@ -21,19 +24,24 @@ export default function UserDetailScreen() {
   const { isVip, refreshVipStatus } = useVipStatus();
 
   useEffect(() => {
-    if (users && id) {
-      const foundUser = users.find(u => u.id === id);
+    if ((users || usersInterest) && id) {
+      const foundUser = users?.find(u => u.id === id)
       if (foundUser) {
         setUser(foundUser);
       }
+
+      const foundUserInterest = usersInterest?.find(u => u.id === id)
+      if (foundUserInterest) {
+        setUser(foundUserInterest as unknown as UserSuggestion);
+      }
     }
-  }, [id, users]);
+  }, [id, users, usersInterest]);
 
   useEffect(() => {
     refreshVipStatus();
   }, []);
 
-  if (isLoading) {
+  if (isLoading || isLoadingMatches) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF4458" />
@@ -45,11 +53,6 @@ export default function UserDetailScreen() {
   if (!user) {
     return (
       <SafeAreaView style={styles.notFoundContainer}>
-        <Ionicons name="alert-circle-outline" size={50} color="#ccc" />
-        <Text style={styles.notFoundText}>Không tìm thấy thông tin người dùng</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Quay lại</Text>
-        </TouchableOpacity>
       </SafeAreaView>
     );
   }

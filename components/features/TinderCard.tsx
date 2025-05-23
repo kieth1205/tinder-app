@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text } from "../Themed";
+import { View } from "../Themed";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { IStory, Story } from "./Story";
 import { UserSuggestion } from "@/types";
@@ -11,61 +11,24 @@ type OverlayDirection = "left" | "right" | "up" | null;
 interface TinderCardProps {
   character: UserSuggestion;
   overlayDirection?: OverlayDirection;
+  interestId?: string;
 }
 
-export const TinderCard = ({ character, overlayDirection = null }: TinderCardProps) => {
+
+
+export const TinderCard = ({ character, overlayDirection = null, interestId }: TinderCardProps) => {
   const router = useRouter();
 
   const handleInfoPress = () => {
     // Chuyển hướng tới màn hình chi tiết người dùng với ID
     router.push({
       pathname: "/user-detail/[id]",
-      params: { id: character.id }
+      params: { id: character.id, interestId }
     });
-  };
-
-  const renderOverlayLabel = () => {
-    if (!overlayDirection) return null;
-
-    let label = "";
-    let borderColor = "#2ECC71";
-    let rotation = "-20deg";
-    switch (overlayDirection) {
-      case "right":
-        label = "LIKE";
-        borderColor = "#2ECC71";
-        rotation = "-20deg";
-        break;
-      case "left":
-        label = "NOPE";
-        borderColor = "#FF6B6B";
-        rotation = "20deg";
-        break;
-      case "up":
-        label = "SUPER LIKE";
-        borderColor = "#3498DB";
-        rotation = "0deg";
-        break;
-    }
-
-    return (
-      <View
-        style={[
-          styles.overlayLabel,
-          {
-            borderColor,
-            transform: [{ rotate: rotation }],
-          },
-        ]}
-      >
-        <Text style={[styles.overlayText, { color: borderColor }]}>{label}</Text>
-      </View>
-    );
   };
 
   return (
     <View style={styles.card}>
-      {renderOverlayLabel()}
       <Story
         user={character}
         name={character.name}
@@ -118,17 +81,25 @@ const styles = StyleSheet.create({
   },
   overlayLabel: {
     position: "absolute",
-    top: 40,
-    left: 20,
     borderWidth: 4,
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    zIndex: 200,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    zIndex: 210,
     backgroundColor: "rgba(0,0,0,0.0)",
   },
   overlayText: {
-    fontSize: 32,
+    fontSize: 38,
     fontWeight: "bold",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  overlayTint: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    borderRadius: 20,
+    zIndex: 200,
   },
 });

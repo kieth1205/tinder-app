@@ -39,13 +39,16 @@ export const updateUserLocation = async (): Promise<boolean> => {
     }
 }
 
-export const useGetInterestMatches = (interestId: string) => {
+export const useGetInterestMatches = (interestId?: string) => {
     const query = useQuery({
         queryKey: ['interest-matches', interestId],
         queryFn: async () => {
+            if (!interestId) return;
+
             const response = await getUsersByInterest(interestId);
             return response;
         },
+        enabled: !!interestId,
     });
     return query;
 }

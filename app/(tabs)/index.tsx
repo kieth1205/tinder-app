@@ -40,9 +40,10 @@ export default function TabOneScreen() {
 
   const [characters, setCharacters] = useState<any[]>([]);
   const [highlightedButton, setHighlightedButton] = useState<Direction | null>(null);
+  const [swipeOverlayDirection, setSwipeOverlayDirection] = useState<Direction | null>(null);
 
   const { isVip, refreshVipStatus } = useVipStatus();
-
+    
   useFocusEffect(
     React.useCallback(() => {
       refreshVipStatus();
@@ -50,18 +51,15 @@ export default function TabOneScreen() {
     }, [refreshVipStatus, refetch])
   );
 
-  // Cập nhật danh sách người dùng khi matchesData thay đổi
   useEffect(() => {
     if (matchesData && matchesData.length > 0) {
       setCharacters(matchesData);
     } else if (error) {
-      // Sử dụng dữ liệu dự phòng nếu có lỗi
       console.error("Error fetching matches:", error);
       setCharacters(fallbackData);
     }
   }, [matchesData, error]);
 
-  // Tạo refs dựa trên số lượng người dùng
   const childRefs = useMemo(() => {
     return Array(characters.length)
       .fill(0)
@@ -69,7 +67,6 @@ export default function TabOneScreen() {
   }, [characters.length]);
 
   const swiped = async (direction: Direction, nameToDelete: string) => {
-    // Kiểm tra nếu người dùng không phải VIP và đang cố gắng super like
     if (direction === "up" && !isVip) {
       Alert.alert(
         "Tính năng dành cho VIP",
@@ -80,17 +77,16 @@ export default function TabOneScreen() {
     }
 
     alreadyRemoved.push(nameToDelete);
-    setHighlightedButton(direction); // Highlight button based on swipe direction
+    setHighlightedButton(direction); 
+    setSwipeOverlayDirection(direction);
+    setTimeout(() => setSwipeOverlayDirection(null), 800);
 
-    // Tìm người dùng có tên này để lấy ID
     const user = characters.find((character) => character.name === nameToDelete);
     if (user && user.id) {
       try {
-        // Gọi API swipe với hướng vuốt tương ứng
         const apiDirection = mapDirectionToSwipeDirection(direction);
         const response = await swipeService.createSwipe(user.id, apiDirection);
 
-        // Nếu có match thì hiển thị thông báo
         if (response.match) {
           Alert.alert(
             "Đã Match! 🎉",
@@ -113,7 +109,9 @@ export default function TabOneScreen() {
   };
 
   const swipe = (dir: Direction) => {
-    // Kiểm tra nếu người dùng không phải VIP và đang cố gắng super like
+    setSwipeOverlayDirection(dir);
+    setTimeout(() => setSwipeOverlayDirection(null), 800);
+
     if (dir === "up" && !isVip) {
       Alert.alert(
         "Tính năng dành cho VIP",
@@ -137,15 +135,12 @@ export default function TabOneScreen() {
   };
 
   const onSwipeWillStart = (dir: Direction) => {
-    // Kiểm tra nếu người dùng không phải VIP và đang cố gắng super like
     if (dir === "up" && !isVip) {
-      // Không cập nhật highlightedButton cho super like nếu không phải VIP
       return;
     }
     setHighlightedButton(dir);
   };
 
-  // Hiển thị loading khi đang tải dữ liệu
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, styles.loadingContainer]}>
@@ -176,8 +171,66 @@ export default function TabOneScreen() {
     );
   }
 
+  const renderOverlayLabel = () => {
+    if (!swipeOverlayDirection) return null;
+
+    let label = "";
+    let borderColor = "#2ECC71";
+    let rotation = "-20deg";
+    let labelPosition: any = { top: 100, left: 20 };
+    let tintColor = "rgba(46, 204, 113, 0.15)";
+
+    switch (swipeOverlayDirection) {
+      case "right":
+        label = "LIKE";
+        borderColor = "#2ECC71";
+        rotation = "-20deg";
+        labelPosition = { top: 100, left: 20 };
+        tintColor = "rgba(46, 204, 113, 0.15)";
+        break;
+      case "left":
+        label = "NOPE";
+        borderColor = "#FF6B6B";
+        rotation = "20deg";
+        labelPosition = { top: 100, right: 20 };
+        tintColor = "rgba(255, 107, 107, 0.15)";
+        break;
+      case "up":
+        label = "SUPER LIKE";
+        borderColor = "#3498DB";
+        rotation = "0deg";
+        labelPosition = { top: 100, alignSelf: "center" };
+        tintColor = "rgba(52, 152, 219, 0.15)";
+        break;
+    }
+
+    return (
+      <>
+        {/* Tinted overlay */}
+        <View style={[styles.overlayTint, { backgroundColor: tintColor }]} />
+        {/* Label */}
+        <View
+          style={[
+            styles.overlayLabel,
+            labelPosition,
+            {
+              borderColor,
+              transform: [{ rotate: rotation }],
+            },
+          ]}
+        >
+          <Text style={[styles.overlayText, { color: borderColor }]}>{label}</Text>
+        </View>
+      </>
+    );
+  };
+
+
   return (
     <SafeAreaView style={styles.container}>
+      {swipeOverlayDirection && (
+        renderOverlayLabel()
+      )}
       <View style={styles.cardContainer}>
         {characters.map((character, index) => (
           <TinderCard
@@ -188,7 +241,7 @@ export default function TabOneScreen() {
             onSwipeRequirementFulfilled={(dir) => {
               onSwipeWillStart(dir as Direction);
             }}
-            onSwipeRequirementUnfulfilled={() => setHighlightedButton(null)} // Đặt lại nếu vuốt bị hủy
+            onSwipeRequirementUnfulfilled={() => setHighlightedButton(null)}
           >
             <TinderCardCustom
               character={character}
@@ -351,5 +404,46 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
+  },
+  // Full screen overlay shown briefly after a swipe
+  swipeOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 500,
+  },
+  swipeOverlayText: {
+    fontSize: 42,
+    fontWeight: "bold",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  overlayLabel: {
+    position: "absolute",
+    borderWidth: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    zIndex: 210,
+    backgroundColor: "rgba(0,0,0,0.0)",
+  },
+  overlayText: {
+    fontSize: 38,
+    fontWeight: "bold",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  overlayTint: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    borderRadius: 20,
+    zIndex: 200,
   },
 });
