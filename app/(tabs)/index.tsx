@@ -1,14 +1,15 @@
-import { SafeAreaView, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { SafeAreaView, StyleSheet, ActivityIndicator, Alert, Dimensions, StatusBar, Animated } from "react-native";
 import { Text, View } from "@/components/Themed";
-import React, { useState, useMemo, useEffect } from "react";
-import { TouchableOpacity } from "react-native";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { TouchableOpacity, Platform } from "react-native";
 import TinderCard from "react-tinder-card";
 import { TinderCard as TinderCardCustom } from "@/components/features";
-import { Ionicons } from "@expo/vector-icons"; // Ensure you have @expo/vector-icons installed
+import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useGetMatches } from "@/hooks/use-get-matches";
 import swipeService, { SwipeDirection } from "@/services/swipeService";
 import useVipStatus from "@/hooks/useVipStatus";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 
 // Map tinder-card directions to our API SwipeDirection enum
 export type Direction = "left" | "right" | "up";
@@ -35,12 +36,19 @@ const fallbackData = [
 
 const alreadyRemoved: string[] = [];
 
+
 export default function TabOneScreen() {
   const { data: matchesData, isLoading, error, refetch } = useGetMatches();
+  const router = useRouter();
 
   const [characters, setCharacters] = useState<any[]>([]);
   const [highlightedButton, setHighlightedButton] = useState<Direction | null>(null);
   const [swipeOverlayDirection, setSwipeOverlayDirection] = useState<Direction | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const { isVip, refreshVipStatus } = useVipStatus();
     
@@ -66,6 +74,37 @@ export default function TabOneScreen() {
       .map(() => React.createRef());
   }, [characters.length]);
 
+  // Animation functions
+  const animateButtonPress = (direction: Direction) => {
+    // Scale down and back up
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 0.85,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Fade out and in
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0.7,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const swiped = async (direction: Direction, nameToDelete: string) => {
     if (direction === "up" && !isVip) {
       Alert.alert(
@@ -76,6 +115,7 @@ export default function TabOneScreen() {
       return;
     }
 
+    animateButtonPress(direction);
     alreadyRemoved.push(nameToDelete);
     setHighlightedButton(direction); 
     setSwipeOverlayDirection(direction);
@@ -106,9 +146,24 @@ export default function TabOneScreen() {
     console.log(name + " đã rời khỏi màn hình!");
     setCharacters((prevChars) => prevChars.filter(character => character.name !== name));
     setHighlightedButton(null);
+    
+    // Add a subtle animation when a card leaves
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0.8,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const swipe = (dir: Direction) => {
+    animateButtonPress(dir);
     setSwipeOverlayDirection(dir);
     setTimeout(() => setSwipeOverlayDirection(null), 800);
 
@@ -124,12 +179,19 @@ export default function TabOneScreen() {
     const cardsLeft = characters.filter(
       (person) => !alreadyRemoved.includes(person.name)
     );
+
     if (cardsLeft.length) {
-      const toBeRemoved = cardsLeft[cardsLeft.length - 1].name;
-      const index = characters.findIndex((person) => person.name === toBeRemoved);
-      if (index !== -1 && childRefs[index] && childRefs[index].current) {
-        alreadyRemoved.push(toBeRemoved);
-        (childRefs[index].current as any).swipe(dir);
+      const toBeRemoved = cardsLeft[cardsLeft.length - 1].name; // Find the card object to be removed
+      const index = characters.map((person) => person.name).indexOf(toBeRemoved); // Find the index of which to make the reference to
+      alreadyRemoved.push(toBeRemoved); // Make sure the next card gets removed next time if this card do not have time to exit the screen
+      
+      // Note: child refs are set in the order of rendering, which is the opposite of the order in the characters array
+      // @ts-ignore
+      childRefs[index].current.swipe(dir); // Swipe the card!
+      
+      // Trigger haptic feedback if available
+      if (Platform.OS === 'ios') {
+        // Use haptic feedback API if available in your setup
       }
     }
   };
@@ -144,8 +206,14 @@ export default function TabOneScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#3498DB" />
-        <Text style={styles.loadingText}>Đang tải matches...</Text>
+        <StatusBar barStyle="light-content" />
+        <LinearGradient
+          colors={['#FF416C', '#FF4B2B']}
+          style={styles.loadingGradient}
+        >
+          <ActivityIndicator size="large" color="#FFFFFF" />
+          <Text style={styles.loadingText}>Đang tải matches...</Text>
+        </LinearGradient>
       </SafeAreaView>
     );
   }
@@ -154,19 +222,41 @@ export default function TabOneScreen() {
   if (allSwiped) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.emptyContainer}>
-          <Ionicons name="sad-outline" size={80} color="#ccc" />
-          <Text style={styles.emptyText}>Bạn đã quẹt hết tất cả người dùng</Text>
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={() => {
-              alreadyRemoved.length = 0;
-              refetch();
-            }}
-          >
-            <Text style={styles.refreshButtonText}>Tải lại</Text>
-          </TouchableOpacity>
-        </View>
+        <StatusBar barStyle="light-content" />
+        <LinearGradient
+          colors={['#232526', '#414345']}
+          style={styles.emptyGradient}
+        >
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons name="cards" size={90} color="#FF4B2B" />
+            <Text style={styles.emptyTitle}>Hết người dùng!</Text>
+            <Text style={styles.emptyText}>Bạn đã quẹt hết tất cả người dùng trong khu vực</Text>
+            <TouchableOpacity
+              style={styles.refreshButton}
+              activeOpacity={0.7}
+              onPress={() => {
+                alreadyRemoved.length = 0;
+                setRefreshing(true);
+                refetch().finally(() => setRefreshing(false));
+              }}
+            >
+              <LinearGradient
+                colors={['#FF416C', '#FF4B2B']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.refreshGradient}
+              >
+                {refreshing ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.refreshButtonText}>
+                    <MaterialIcons name="refresh" size={18} /> Tải lại
+                  </Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
       </SafeAreaView>
     );
   }
@@ -179,6 +269,7 @@ export default function TabOneScreen() {
     let rotation = "-20deg";
     let labelPosition: any = { top: 100, left: 20 };
     let tintColor = "rgba(46, 204, 113, 0.15)";
+    let gradientColors = ["#2ECC71", "#2ECC71AA"];
 
     switch (swipeOverlayDirection) {
       case "right":
@@ -187,6 +278,7 @@ export default function TabOneScreen() {
         rotation = "-20deg";
         labelPosition = { top: 100, left: 20 };
         tintColor = "rgba(46, 204, 113, 0.15)";
+        gradientColors = ["#2ECC71", "#2ECC71AA"];
         break;
       case "left":
         label = "NOPE";
@@ -194,6 +286,7 @@ export default function TabOneScreen() {
         rotation = "20deg";
         labelPosition = { top: 100, right: 20 };
         tintColor = "rgba(255, 107, 107, 0.15)";
+        gradientColors = ["#FF6B6B", "#FF6B6BAA"];
         break;
       case "up":
         label = "SUPER LIKE";
@@ -201,13 +294,17 @@ export default function TabOneScreen() {
         rotation = "0deg";
         labelPosition = { top: 100, alignSelf: "center" };
         tintColor = "rgba(52, 152, 219, 0.15)";
+        gradientColors = ["#3498DB", "#3498DBAA"];
         break;
     }
 
     return (
       <>
         {/* Tinted overlay */}
-        <View style={[styles.overlayTint, { backgroundColor: tintColor }]} />
+        <LinearGradient 
+          colors={[tintColor, "transparent"]}
+          style={styles.overlayTint} 
+        />
         {/* Label */}
         <View
           style={[
@@ -228,119 +325,209 @@ export default function TabOneScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {swipeOverlayDirection && (
-        renderOverlayLabel()
-      )}
-      <View style={styles.cardContainer}>
-        {characters.map((character, index) => (
-          <TinderCard
-            ref={childRefs[index] as any}
-            key={character.id}
-            onSwipe={(dir) => swiped(dir as Direction, character.name)}
-            onCardLeftScreen={() => outOfFrame(character.name)}
-            onSwipeRequirementFulfilled={(dir) => {
-              onSwipeWillStart(dir as Direction);
-            }}
-            onSwipeRequirementUnfulfilled={() => setHighlightedButton(null)}
+      <StatusBar barStyle="light-content" />
+      <LinearGradient
+        colors={['#121212', '#1E1E1E']}
+        style={styles.screenGradient}
+      > 
+        {swipeOverlayDirection && (
+          renderOverlayLabel()
+        )}
+        
+        <Animated.View style={[
+          styles.cardContainer, 
+          {transform: [{scale: scaleAnim}], opacity: fadeAnim}
+        ]}>
+          {characters.map((character, index) => (
+            <TinderCard
+              ref={childRefs[index] as any}
+              key={character.id}
+              onSwipe={(dir) => swiped(dir as Direction, character.name)}
+              onCardLeftScreen={() => outOfFrame(character.name)}
+              onSwipeRequirementFulfilled={(dir) => {
+                onSwipeWillStart(dir as Direction);
+              }}
+              onSwipeRequirementUnfulfilled={() => setHighlightedButton(null)}
+            >
+              <TinderCardCustom
+                character={character}
+                overlayDirection={index === characters.length - 1 ? highlightedButton : null}
+              />
+            </TinderCard>
+          ))}
+        </Animated.View>
+        
+        <View style={styles.iconContainer}>
+          <TouchableOpacity
+            style={[
+              styles.iconButton,
+              styles.dislikeButton,
+              highlightedButton === "left" && styles.activeIcon,
+              highlightedButton === "right" && { opacity: 0 },
+              highlightedButton === "up" && { opacity: 0 },
+            ]}
+            activeOpacity={0.7}
+            onPress={() => swipe("left")}
           >
-            <TinderCardCustom
-              character={character}
-              overlayDirection={index === characters.length - 1 ? highlightedButton : null}
-            />
-          </TinderCard>
-        ))}
-      </View>
-      <View style={styles.iconContainer}>
-        <TouchableOpacity
-          style={[
-            styles.iconButton,
-            styles.dislikeButton,
-            highlightedButton === "left" && styles.activeIcon, // Làm nổi bật nếu vuốt sang trái
-            highlightedButton === "right" && { opacity: 0 }, // Ẩn khi vuốt sang phải
-            highlightedButton === "up" && { opacity: 0 }, // Ẩn khi vuốt lên trên
-          ]}
-          onPress={() => swipe("left")}
-        >
-          <Ionicons name="close" size={36} color="white" />
-        </TouchableOpacity>
-        {
-          isVip && (
+            <LinearGradient
+              colors={['#FF4B2B', '#FF416C']}
+              style={styles.iconGradient}
+            >
+              <Ionicons name="close" size={36} color="white" />
+            </LinearGradient>
+          </TouchableOpacity>
+          
+          {isVip && (
             <TouchableOpacity
               style={[
                 styles.iconButton,
                 styles.superLikeButton,
-                highlightedButton === "up" && styles.activeIcon, // Làm nổi bật nếu vuốt lên trên
-                highlightedButton === "right" && { opacity: 0 }, // Ẩn khi vuốt sang phải
-                highlightedButton === "left" && { opacity: 0 }, // Ẩn khi vuốt sang trái
+                highlightedButton === "up" && styles.activeIcon,
+                highlightedButton === "right" && { opacity: 0 },
+                highlightedButton === "left" && { opacity: 0 },
               ]}
+              activeOpacity={0.7}
               onPress={() => swipe("up")}
             >
-              <Ionicons name="star" size={36} color="white" />
+              <LinearGradient
+                colors={['#3498DB', '#2980B9']}
+                style={styles.iconGradient}
+              >
+                <Ionicons name="star" size={36} color="white" />
+              </LinearGradient>
             </TouchableOpacity>
-          )
-        }
-        <TouchableOpacity
-          style={[
-            styles.iconButton,
-            styles.likeButton,
-            highlightedButton === "right" && styles.activeIcon, // Làm nổi bật nếu vuốt sang phải
-            highlightedButton === "left" && { opacity: 0 }, // Ẩn khi vuốt sang trái
-            highlightedButton === "up" && { opacity: 0 }, // Ẩn khi vuốt lên trên
-          ]}
-          onPress={() => swipe("right")}
-        >
-          <Ionicons name="heart" size={36} color="white" />
-        </TouchableOpacity>
-      </View>
+          )}
+          
+          <TouchableOpacity
+            style={[
+              styles.iconButton,
+              styles.likeButton,
+              highlightedButton === "right" && styles.activeIcon,
+              highlightedButton === "left" && { opacity: 0 },
+              highlightedButton === "up" && { opacity: 0 },
+            ]}
+            activeOpacity={0.7}
+            onPress={() => swipe("right")}
+          >
+            <LinearGradient
+              colors={['#2ECC71', '#27AE60']}
+              style={styles.iconGradient}
+            >
+              <Ionicons name="heart" size={36} color="white" />
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
+    flex: 1,
+    backgroundColor: '#121212',
   },
+  // Screen gradient background
+  screenGradient: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 20,
+  },
+  // App header styling
+  appHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  logoWrapper: {
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  // Loading state
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingGradient: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
-    marginTop: 10,
-    fontSize: 16,
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  // Empty state
+  emptyGradient: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  emptyTitle: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginVertical: 12,
+    letterSpacing: 0.5,
   },
   emptyText: {
-    marginTop: 20,
     fontSize: 18,
-    color: "#888",
-    textAlign: "center",
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
     paddingHorizontal: 20,
+    marginBottom: 20,
+    lineHeight: 24,
   },
   refreshButton: {
     marginTop: 20,
-    backgroundColor: "#FF6B6B",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 25,
+    borderRadius: 30,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#FF416C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  refreshGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   refreshButtonText: {
-    color: "white",
+    color: 'white',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
-  header: {
-    color: "#000",
-    fontSize: 30,
-    marginBottom: 30,
-  },
+  // Card container
   cardContainer: {
     width: "100%",
     height: 550,
@@ -354,95 +541,104 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 20,
     borderRadius: 20,
-    resizeMode: "cover",
+    overflow: 'hidden',
   },
   cardImage: {
-    width: "100%",
-    height: "100%",
-    overflow: "hidden",
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
     borderRadius: 20,
   },
   cardTitle: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     margin: 10,
-    color: "#fff",
+    color: '#fff',
   },
+  // Controls for swiping
   iconContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
     marginTop: 20,
-    gap: 20,
-    backgroundColor: "transparent",
+    width: '100%',
+    paddingHorizontal: 20,
+    paddingBottom: 10,
   },
   iconButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    justifyContent: "center",
-    alignItems: "center",
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  iconGradient: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dislikeButton: {
-    backgroundColor: "#FF6B6B",
+    backgroundColor: 'transparent',
   },
   likeButton: {
-    backgroundColor: "#2ECC71",
+    backgroundColor: 'transparent',
   },
   superLikeButton: {
-    backgroundColor: "#3498DB",
-  },
-  infoText: {
-    height: 28,
-    justifyContent: "center",
-    display: "flex",
-    marginTop: 10,
+    backgroundColor: 'transparent',
   },
   activeIcon: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    elevation: 8,
+    transform: [{ scale: 1.1 }],
   },
-  // Full screen overlay shown briefly after a swipe
+  // Overlay elements
   swipeOverlay: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 500,
   },
   swipeOverlayText: {
     fontSize: 42,
-    fontWeight: "bold",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   overlayLabel: {
-    position: "absolute",
+    position: 'absolute',
     borderWidth: 4,
     paddingVertical: 8,
     paddingHorizontal: 18,
     borderRadius: 12,
     zIndex: 210,
-    backgroundColor: "rgba(0,0,0,0.0)",
+    backgroundColor: 'rgba(0,0,0,0.0)',
   },
   overlayText: {
     fontSize: 38,
-    fontWeight: "bold",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   overlayTint: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
     borderRadius: 20,
     zIndex: 200,
   },
