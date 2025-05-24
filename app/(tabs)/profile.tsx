@@ -339,6 +339,8 @@ export default function ProfileScreen() {
       Alert.alert('Lỗi', 'Đã xảy ra lỗi khi xử lý nạp tiền');
     } finally {
       setLoading(false);
+      refreshVipStatus();
+      fetchBalance();
     }
   };
 

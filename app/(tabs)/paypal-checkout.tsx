@@ -2,48 +2,14 @@ import React, { useRef } from 'react';
 import { ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
-import vipService from '../../services/vipService';
 
 const PaypalCheckout = () => {
   const { url, amount } = useLocalSearchParams<{ url: string; amount: string }>();
   const router = useRouter();
-  const isHandledRef = useRef(false);
 
   if (!url) {
     return null;
   }
-
-  const handleNavigationChange = async (navState: any) => {
-    const { url: currentUrl } = navState;
-
-    // PayPal will redirect to your success url containing token param
-    if (!isHandledRef.current && currentUrl.includes('paypal-success')) {
-      isHandledRef.current = true;
-      const urlObj = new URL(currentUrl);
-      const token = urlObj.searchParams.get('token');
-
-      if (!token) {
-        Alert.alert('Lỗi', 'Không tìm thấy token thanh toán');
-        router.back();
-        return;
-      }
-
-      const result = await vipService.capturePaypalOrder(token);
-      if (result.success) {
-        Alert.alert('Thành công', 'Nạp tiền thành công!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              router.back();
-            },
-          },
-        ]);
-      } else {
-        Alert.alert('Lỗi', result.error || 'Thanh toán thất bại');
-        router.back();
-      }
-    }
-  };
 
   return (
     <WebView

@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
 import { ALCOHOL_CONSUMPTION, COMMUNICATION_STYLE, DIETARY_PREFERENCE, EDUCATION, EXERCISE_FREQUENCY, GENDER, INTEREST, LOOKING_FOR, LOVE_LANGUAGE, MappingAlcoholConsumption, MappingCommunicationStyle, MappingDietaryPreference, MappingEducation, MappingExercise, MappingGender, MappingInterest, MappingLookingFor, MappingLoveLanguage, MappingPets, MappingSleepPattern, MappingSmokingPreference, MappingSocialMediaUsage, MappingZodiacSign, PETS, SLEEP_PATTERN, SMOKING_PREFERENCE, SOCIAL_MEDIA_USAGE, UserSuggestion, ZODIAC_SIGN } from '@/types';
-import { useGetInterestMatches, useGetMatches } from '@/hooks/use-get-matches';
+import { useGetInterestMatches, useGetMatches, useGetUserDetail } from '@/hooks/use-get-matches';
 import messageService from '@/services/messageService';
 import { AuthContext } from '@/context/AuthProvider';
 import useVipStatus from '@/hooks/useVipStatus';
@@ -12,10 +12,12 @@ import useVipStatus from '@/hooks/useVipStatus';
 export default function UserDetailScreen() {
   const { id, interestId } = useLocalSearchParams<{ id: string, interestId?: string }>();
   const router = useRouter();
-  
+
   const { data: users, isLoading } = useGetMatches();
   const { data: usersInterest, isLoading: isLoadingMatches } = useGetInterestMatches(interestId);
-  
+  const { data: userDetail, isLoading: isLoadingUserDetail } = useGetUserDetail(id);
+
+
   const [user, setUser] = useState<UserSuggestion | null>(null);
   const { user: currentUser } = useContext(AuthContext);
   const [modalVisible, setModalVisible] = useState(false);
@@ -25,23 +27,35 @@ export default function UserDetailScreen() {
 
   useEffect(() => {
     if ((users || usersInterest) && id) {
+      let notFound = true;
+
       const foundUser = users?.find(u => u.id === id)
       if (foundUser) {
         setUser(foundUser);
+        notFound = false;
       }
 
       const foundUserInterest = usersInterest?.find(u => u.id === id)
       if (foundUserInterest) {
         setUser(foundUserInterest as unknown as UserSuggestion);
+        notFound = false;
+      }
+
+      if (notFound) {
+        if (userDetail) {
+          setUser(userDetail);
+        } else {
+          setUser(null);
+        }
       }
     }
-  }, [id, users, usersInterest]);
+  }, [id, users, usersInterest, userDetail]);
 
   useEffect(() => {
     refreshVipStatus();
   }, []);
 
-  if (isLoading || isLoadingMatches) {
+  if (isLoading || isLoadingMatches || isLoadingUserDetail) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF4458" />
@@ -53,6 +67,7 @@ export default function UserDetailScreen() {
   if (!user) {
     return (
       <SafeAreaView style={styles.notFoundContainer}>
+        <Text style={styles.notFoundText}>Không tìm thấy người dùng</Text>
       </SafeAreaView>
     );
   }
@@ -100,6 +115,8 @@ export default function UserDetailScreen() {
       setSendingMessage(false);
     }
   };
+
+  console.log("user", user);
 
   return (
     <SafeAreaView style={styles.container}>

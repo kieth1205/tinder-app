@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, Text, View, Image, Pressable, ActivityIndicator }
 import useVipStatus from '@/hooks/useVipStatus';
 import vipService from '@/services/vipService';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 interface LikerInfo {
   liked_at: string;
@@ -14,7 +15,8 @@ interface LikerInfo {
     birthday: string | null;
     interests: string[];
     job: string | null;
-  }
+  };
+  direction: "LEFT" | "RIGHT" | "UP";
 }
 
 const LikedByUsersList = () => {
@@ -44,6 +46,9 @@ const LikedByUsersList = () => {
   }, [isVip]);
 
   const handleUserPress = (userId: string) => {
+
+    console.log(userId);
+
     router.push(`/user-detail/${userId}`);
   };
 
@@ -93,7 +98,15 @@ const LikedByUsersList = () => {
             style={styles.userImage} 
           />
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{item.user.name}</Text>
+            <View style={styles.nameContainer}>
+              <Text style={styles.userName}>{item.user.name}</Text>
+              {item.direction === 'UP' && (
+                <View style={styles.superLikeContainer}>
+                  <Ionicons name="flame" size={18} color="#1DA1F2" style={styles.superLikeIcon} />
+                  <Text style={styles.superLikeText}>Super Like</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.userMeta}>
               {item.user.gender === 'MALE' ? 'Nam' : 'Nữ'}
               {item.user.interests && item.user.interests.length > 0 ? ' • ' : ''}
@@ -137,10 +150,31 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     justifyContent: 'center',
   },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
+  },
+  superLikeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+    backgroundColor: 'rgba(29, 161, 242, 0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  superLikeIcon: {
+    marginRight: 2,
+  },
+  superLikeText: {
+    fontSize: 12,
+    color: '#1DA1F2',
+    fontWeight: '500',
   },
   userMeta: {
     fontSize: 14,

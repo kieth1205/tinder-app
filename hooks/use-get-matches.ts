@@ -52,3 +52,15 @@ export const useGetInterestMatches = (interestId?: string) => {
     });
     return query;
 }
+
+export const useGetUserDetail = (userId: string) => {
+    const query = useQuery({
+        queryKey: ['user-detail', userId],
+        queryFn: async () => {
+            const response = await api.get<UserSuggestion>(`/users/${userId}`);
+            return response.data;
+        },
+        enabled: !!userId,
+    });
+    return query;
+}
