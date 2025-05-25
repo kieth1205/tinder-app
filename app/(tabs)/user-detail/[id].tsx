@@ -116,8 +116,6 @@ export default function UserDetailScreen() {
     }
   };
 
-  console.log("user", user);
-
   return (
     <SafeAreaView style={styles.container}>
       {isVip && (

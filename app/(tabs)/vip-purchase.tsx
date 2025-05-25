@@ -94,9 +94,6 @@ const VipPurchaseScreen = () => {
       setLoading(true);
       // 1. create order
       const approvalUrl = await vipService.createPaypalOrder(amount);
-
-      console.log('approvalUrl', approvalUrl);
-
       if (!approvalUrl) {
         Alert.alert('Lỗi', 'Không tạo được phiên PayPal.');
         return;

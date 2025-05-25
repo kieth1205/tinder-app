@@ -29,11 +29,7 @@ const PaypalCheckout = () => {
       javaScriptEnabled={true}
       domStorageEnabled={true}
       onMessage={(e) => {
-        console.log(e.nativeEvent.data);
-
         let payment = JSON.parse(e.nativeEvent.data);
-        console.log(payment);
-
         if (payment.status === 'COMPLETED') {
           Alert.alert('Thành công', 'Nạp tiền thành công!', [
             {

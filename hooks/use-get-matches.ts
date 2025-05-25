@@ -21,6 +21,8 @@ export const useGetMatches = () => {
                 return response.data;
             }
         },
+        gcTime: 0,
+        staleTime: 0,
     });
     return query;
 }

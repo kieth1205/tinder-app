@@ -65,8 +65,6 @@ const BirthStep = () => {
     router.push("/register/GenderStep");
   };
 
-  console.log("date", date)
-
   return (
     <SafeAreaView style={styles.container}>
       <ProgressBar step={STEPS.BirthStep} totalSteps={TOTAL_STEPS} />
