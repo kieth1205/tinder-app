@@ -38,7 +38,7 @@ const alreadyRemoved: string[] = [];
 
 
 export default function TabOneScreen() {
-  const { data: matchesData, isLoading, error, refetch } = useGetMatches();
+  const { data: matchesData, isLoading, error, refetch, isFetching } = useGetMatches();
   const router = useRouter();
 
   const [characters, setCharacters] = useState<any[]>([]);
@@ -203,7 +203,7 @@ export default function TabOneScreen() {
     setHighlightedButton(dir);
   };
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <SafeAreaView style={[styles.container, styles.loadingContainer]}>
         <StatusBar barStyle="light-content" />
